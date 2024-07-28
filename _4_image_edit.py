@@ -24,7 +24,7 @@ def arguments():
     # parser.add_argument('--prompt_str', type=str, default=None)
 
     # parser.add_argument('--edit_prompt_str', type=str, default=None)
-    parser.add_argument('--edit_prompt_str', type=str, default='a bus is waiting for the <train-toy> to pass')
+    parser.add_argument('--edit_prompt_str', type=str, default=None)
 
     ### NOTE: guidance_scale  
     parser.add_argument('--negative_guidance_scale', default=7.5, type=float)
