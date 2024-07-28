@@ -204,9 +204,14 @@ if __name__=="__main__":
     file_name = '_'.join(edit_caption.split(' ') + [str(args.cross_replace_steps)]).replace('<', '').replace('>', '')
 
     rec_pil[0].save(os.path.join(args.results_folder_edit, 
-                    f"null_attend_textinv_recon_{args.postfix}/{file_name}.png"))
+                    f"null_attend_textinv_recon/{file_name}.png"))
     rec_pil[1].save(os.path.join(args.results_folder_edit, 
-                    f"null_attend_textinv_recon_{args.postfix}/{file_name}_edit.png"))
+                    f"null_attend_textinv_recon/{file_name}_edit.png"))
+
+    # rec_pil[0].save(os.path.join(args.results_folder_edit, 
+    #                 f"null_attend_textinv_recon_{args.postfix}/{file_name}.png"))
+    # rec_pil[1].save(os.path.join(args.results_folder_edit, 
+    #                 f"null_attend_textinv_recon_{args.postfix}/{file_name}_edit.png"))
 
     ### NOTE: 
     # rec_pil[0].save(os.path.join(args.results_folder_edit, 
