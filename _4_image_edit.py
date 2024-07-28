@@ -67,6 +67,9 @@ def arguments():
     parser.add_argument('--indices_to_amplify', nargs='+', type=int, default=None)
     parser.add_argument('--amplify_scale', nargs='+', type=float, default=[5.0,1.0])
 
+    
+    parser.add_argument('--replaced_embed_folder', type=str, required=True)
+
     args = parser.parse_args()
     return args
 
@@ -77,12 +80,12 @@ if __name__=="__main__":
     # os.makedirs(os.path.join(args.results_folder, "null_attend_textinv_recon"), exist_ok=True)
     os.makedirs(os.path.join(args.results_folder_edit, f"null_attend_textinv_recon"), exist_ok=True)
 
-    with open(os.path.join(args.results_folder, 
+    with open(os.path.join(args.replaced_embed_folder, 
             f"embed_list/{args.postfix}/{bname}_uncond.pkl"), 
             'rb') as f:
         uncond_embeddings_list= pkl.load(f)
 
-    with open(os.path.join(args.results_folder, 
+    with open(os.path.join(args.replaced_embed_folder, 
             f"embed_list/{args.postfix}/{bname}_cond.pkl"), 
             'rb') as f:
         cond_embeddings_list= pkl.load(f)
