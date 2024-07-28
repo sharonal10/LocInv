@@ -806,10 +806,10 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                 ### ============== 1st part START: ATTENTION ==============
                 # cos_target_loss = 1.0- alpha_cos - (1.0 - beta_cos - alpha_cos)/50*i 
                 # cos_target_loss = alpha_cos - (alpha_cos - beta_cos)/ float(num_inference_steps) * i 
-                cos_target_loss = np.exp(-float(i)/alpha_cos)*beta_cos
-                iou_target_loss = np.exp(-float(i)/alpha_iou)*beta_iou
-                sim_target_loss = np.exp(-float(i)/alpha_sim)*beta_sim
-                adj_target_loss = np.exp(-float(i)/alpha_adj)*beta_adj
+                cos_target_loss = 0 # np.exp(-float(i)/alpha_cos)*beta_cos
+                iou_target_loss = 0 # np.exp(-float(i)/alpha_iou)*beta_iou
+                sim_target_loss = 0 # np.exp(-float(i)/alpha_sim)*beta_sim
+                adj_target_loss = 0 # np.exp(-float(i)/alpha_adj)*beta_adj
 
                 target_string=f"\n Step {i} Target cos: {cos_target_loss:0.6f}; "+ \
                                 f"iou: {iou_target_loss:0.6f}; mutual sim: {sim_target_loss:0.6f};" + \
