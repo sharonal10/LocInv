@@ -38,6 +38,7 @@ python _4_image_edit.py \
 --input_image ${IMG_FOLDER}/${FILE_NAME}.${IMG_FORMAT} \
 --postfix cos_al_50.0_beta_0.7_lam_5.0_iou_al_25.0_beta_0.7_lam_5.0_kl_al_25.0_beta_1.0_lam_5.0_adj_al_50.0_beta_0.1_lam_2.0_softmax_True_smooth_True_null_31_attn_31_CFG_7.5_adj_False \
 --results_folder output/${FILE_NAME}/ \
+--results_folder_edit output/test \
 --negative_guidance_scale 7.5 \
 --placeholder_token ${PLACEHOLDER1} ${PLACEHOLDER2} \
 --initializer_token ${INIT_TOKEN1} ${INIT_TOKEN2} \
