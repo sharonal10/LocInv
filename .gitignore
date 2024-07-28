@@ -3,7 +3,7 @@ blip_embed
 images
 outputs
 *__pycache__*
-*.sh
+# *.sh
 *.png
 output
 gen_imgs
