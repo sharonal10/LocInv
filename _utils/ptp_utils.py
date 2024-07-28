@@ -200,7 +200,7 @@ def save_attn_avg(save_path, img_path, caption_list, aggr_attn, placeholders_lis
 
         single_attn_paths=[]
         for (word_id, object_name) in keyword_ind:
-            single_save_path=os.path.join(save_path, f'{object_name}_attn.png')
+            single_save_path=os.path.join(save_path, f'{object_name.replace('<', '').replace('>', '')}_attn.png')
             Image.fromarray(stack_attn[word_id]).save(single_save_path)
             single_attn_paths.append(single_save_path)
 
