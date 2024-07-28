@@ -16,9 +16,9 @@ INIT_TOKEN2='dog'
 
 MAX_ITER=0
 
-lam_cos=4.0 
-lam_iou=4.0
-lam_kl=4.0
+lam_cos=10.0 
+lam_iou=10.0
+lam_kl=10.0
 
 CUDA_VISIBLE_DEVICES=0 python _3_dpl_seg_inv.py \
     --input_image ${IMG_FOLDER}/${FILE_NAME}.${IMG_FORMAT} \
