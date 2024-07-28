@@ -78,12 +78,12 @@ if __name__=="__main__":
     os.makedirs(os.path.join(args.results_folder_edit, f"null_attend_textinv_recon_{args.postfix}"), exist_ok=True)
 
     with open(os.path.join(args.results_folder, 
-            f"embed_list_{args.postfix}/{bname}_uncond.pkl"), 
+            f"embed_list/{args.postfix}/{bname}_uncond.pkl"), 
             'rb') as f:
         uncond_embeddings_list= pkl.load(f)
 
     with open(os.path.join(args.results_folder, 
-            f"embed_list_{args.postfix}/{bname}_cond.pkl"), 
+            f"embed_list/{args.postfix}/{bname}_cond.pkl"), 
             'rb') as f:
         cond_embeddings_list= pkl.load(f)
 
