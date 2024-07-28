@@ -201,7 +201,7 @@ if __name__=="__main__":
             indices_local=args.indices_local,
         )
     
-    file_name = '_'.join(edit_caption.split(' ') + [str(args.cross_replace_steps)])
+    file_name = '_'.join(edit_caption.split(' ') + [str(args.cross_replace_steps)]).replace('<', '').replace('>', '')
 
     rec_pil[0].save(os.path.join(args.results_folder_edit, 
                     f"null_attend_textinv_recon_{args.postfix}/{file_name}.png"))
