@@ -75,7 +75,7 @@ if __name__=="__main__":
     args = arguments()
     bname = os.path.basename(args.input_image).split(".")[0]
     # os.makedirs(os.path.join(args.results_folder, "null_attend_textinv_recon"), exist_ok=True)
-    os.makedirs(os.path.join(args.results_folder_edit, f"null_attend_textinv_recon_{args.postfix}"), exist_ok=True)
+    os.makedirs(os.path.join(args.results_folder_edit, f"null_attend_textinv_recon"), exist_ok=True)
 
     with open(os.path.join(args.results_folder, 
             f"embed_list/{args.postfix}/{bname}_uncond.pkl"), 
