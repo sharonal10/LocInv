@@ -1043,9 +1043,21 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         curr_image = self.vae.decode(temp_latents).sample
                         curr_image = (curr_image / 2 + 0.5).clamp(0, 1)
                         # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
-                        # image = image.cpu().permute(0, 2, 3, 1).float().numpy()
-                        print('shape', curr_image.shape)
+                        curr_image = curr_image.cpu().permute(0, 2, 3, 1).float().numpy()[0]
+                        from PIL import Image
+                        curr_image_save = Image.fromarray(curr_image)
+                        # Save the image as a JPEG file
+                        curr_image_save.save('whole_img.jpg')
+                        half_img = curr_image
+                        half_img[:, half_img.shape[1] // 2:, :] = 0
+                        half_img = Image.fromarray(half_img)
+                        half_img.save('half_img.jpg')
 
+                        assert False
+
+                        
+
+                        print('shape', curr_image.shape)
 
                         loss = F.mse_loss(noise_pred, noise, reduction="none").mean([1, 2, 3]).mean()
 
