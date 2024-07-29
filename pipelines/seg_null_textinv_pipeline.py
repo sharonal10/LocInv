@@ -1021,29 +1021,61 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
                 
                 with torch.enable_grad():
-                    context=torch.cat([uncond_embeddings, cond_embeddings])
-                    self.unet.zero_grad()
+                    for j in range(null_inner_steps):
+                        context=torch.cat([uncond_embeddings, cond_embeddings])
+                        self.unet.zero_grad()
+                        noise = torch.randn(latent_model_input.shape).to(latent_model_input.device)
+                        print(noise.shape)
+
+                        noisy_latents = self.scheduler.add_noise(latent_model_input, noise, t)
+
+                        noise_pred = self.unet(noisy_latents,
+                                                t,
+                                                encoder_hidden_states=context,
+                                                cross_attention_kwargs=cross_attention_kwargs,
+                                                ).sample
+                        
+                        latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
+                        
+                        loss = F.mse_loss(noise_pred, noise, reduction="none").mean([1, 2, 3]).mean()
+
+                        loss.backward(retain_graph=False)
+                        opt.step()
+                        opt.zero_grad()
+                                
+                        if j % print_freq == 0:
+                            print(f'Step {i}, Editing loop {j} Loss: {loss.item():0.6f}')
+
+                torch.cuda.empty_cache()
+                prompt_embeds=torch.cat([uncond_embeddings, cond_embeddings])
+                uncond_embeddings_list.append(uncond_embeddings.cpu().detach())
+
+                
+
+                ### NOTE: this line might be the reason for retain_graph True, since some cache not released with backward()
+                with torch.no_grad():
                     noise = torch.randn(latent_model_input.shape).to(latent_model_input.device)
                     print(noise.shape)
 
                     noisy_latents = self.scheduler.add_noise(latent_model_input, noise, t)
+                    noise_pred = self.unet( 
+                                    noisy_latents,
+                                    t,
+                                    encoder_hidden_states=prompt_embeds,
+                                    cross_attention_kwargs=cross_attention_kwargs,
+                                    ).sample
+                
+                # perform guidance
+                if do_classifier_free_guidance:
+                    noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+                    noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
 
-                    noise_pred = self.unet(noisy_latents,
-                                            t,
-                                            encoder_hidden_states=context,
-                                            cross_attention_kwargs=cross_attention_kwargs,
-                                            ).sample
-                    
-                    latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
-                    
-                    loss = F.mse_loss(noise_pred, noise, reduction="none").mean([1, 2, 3]).mean()
+                # compute the previous noisy sample x_t -> x_t-1
+                latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
 
-                    loss.backward(retain_graph=False)
-                    opt.step()
-                    opt.zero_grad()
-                            
-                    if j % print_freq == 0:
-                        print(f'Step {i}, Editing loop {j} Loss: {loss.item():0.6f}')
+                # call the callback, if provided
+                if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
+                    progress_bar.update()
 
 
                 
