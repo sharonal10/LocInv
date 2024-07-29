@@ -991,160 +991,160 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                     progress_bar.update()
 
 
-        with self.progress_bar(total=num_inference_steps) as progress_bar:
-            for i, t in enumerate(timesteps):
-                latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
-                latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
+        # with self.progress_bar(total=num_inference_steps) as progress_bar:
+        #     for i, t in enumerate(timesteps):
+        #         latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
+        #         latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
 
-                torch.cuda.empty_cache()
-                cond_embeds = self.text_encoder.get_input_embeddings().weight[placeholder_token_id]
-                cond_embeddings_list.append(cond_embeds.detach().cpu())
-                if attention_maps is not None:
-                    attention_maps_list.append(attention_maps.detach().cpu())
+        #         torch.cuda.empty_cache()
+        #         cond_embeds = self.text_encoder.get_input_embeddings().weight[placeholder_token_id]
+        #         cond_embeddings_list.append(cond_embeds.detach().cpu())
+        #         if attention_maps is not None:
+        #             attention_maps_list.append(attention_maps.detach().cpu())
 
-                prompt_embeds = self._encode_prompt(
-                        prompt,
-                        device,
-                        num_images_per_prompt,
-                        do_classifier_free_guidance,
-                        negative_prompt,
-                        prompt_embeds=None, ### NOTE: reinitialize
-                        negative_prompt_embeds=negative_prompt_embeds,
-                    )
+        #         prompt_embeds = self._encode_prompt(
+        #                 prompt,
+        #                 device,
+        #                 num_images_per_prompt,
+        #                 do_classifier_free_guidance,
+        #                 negative_prompt,
+        #                 prompt_embeds=None, ### NOTE: reinitialize
+        #                 negative_prompt_embeds=negative_prompt_embeds,
+        #             )
                 
-                ### ============== 2nd part START: NULL INVERSION ==============
-                uncond_embeddings, cond_embeddings = prompt_embeds.chunk(2)
-                latent_prev = all_latents[len(all_latents) - i - 2]
+        #         ### ============== 2nd part START: NULL INVERSION ==============
+        #         uncond_embeddings, cond_embeddings = prompt_embeds.chunk(2)
+        #         latent_prev = all_latents[len(all_latents) - i - 2]
                 
-                uncond_embeddings = uncond_embeddings.detach().clone().requires_grad_(True)
-                cond_embeddings = cond_embeddings.detach().clone().requires_grad_(False)
-                opt = torch.optim.Adam([uncond_embeddings], lr=1e-2 * (1. - i / 100.))
+        #         uncond_embeddings = uncond_embeddings.detach().clone().requires_grad_(True)
+        #         cond_embeddings = cond_embeddings.detach().clone().requires_grad_(False)
+        #         opt = torch.optim.Adam([uncond_embeddings], lr=1e-2 * (1. - i / 100.))
                 
-                with torch.enable_grad():
-                    for j in range(null_inner_steps):
-                        context=torch.cat([uncond_embeddings, cond_embeddings])
-                        noise = torch.randn(latent_model_input.shape).to(latent_model_input.device)
-                        # print(noise.shape)
+        #         with torch.enable_grad():
+        #             for j in range(null_inner_steps):
+        #                 context=torch.cat([uncond_embeddings, cond_embeddings])
+        #                 noise = torch.randn(latent_model_input.shape).to(latent_model_input.device)
+        #                 # print(noise.shape)
 
-                        noisy_latents = self.scheduler.add_noise(latent_model_input, noise, t)
+        #                 noisy_latents = self.scheduler.add_noise(latent_model_input, noise, t)
 
-                        diffs = []
-                        # with torch.no_grad():
-                        # get all segmented parts for noise calcs
-                        temp_latents = 1 / self.vae.config.scaling_factor * latent_model_input
-                        curr_image = self.vae.decode(temp_latents).sample
-                        curr_image = (curr_image / 2 + 0.5).clamp(0, 1)
-                        # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
-                        curr_image = curr_image.cpu().permute(0, 2, 3, 1).float().detach().numpy()[0]
-                        for seg_map in seg_maps_full:
-                            half_img = curr_image * seg_map.cpu().permute(1,2,0).float().detach().numpy()
-                            half_img_enc = torch.tensor(half_img).permute(2, 0, 1).unsqueeze(0).to(latent_model_input.device)
-                            half_img_enc = (half_img_enc - 0.5) * 2
-                            curr_img_segment = self.vae.encode(half_img_enc).latent_dist.sample()
+        #                 diffs = []
+        #                 # with torch.no_grad():
+        #                 # get all segmented parts for noise calcs
+        #                 temp_latents = 1 / self.vae.config.scaling_factor * latent_model_input
+        #                 curr_image = self.vae.decode(temp_latents).sample
+        #                 curr_image = (curr_image / 2 + 0.5).clamp(0, 1)
+        #                 # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
+        #                 curr_image = curr_image.cpu().permute(0, 2, 3, 1).float().detach().numpy()[0]
+        #                 for seg_map in seg_maps_full:
+        #                     half_img = curr_image * seg_map.cpu().permute(1,2,0).float().detach().numpy()
+        #                     half_img_enc = torch.tensor(half_img).permute(2, 0, 1).unsqueeze(0).to(latent_model_input.device)
+        #                     half_img_enc = (half_img_enc - 0.5) * 2
+        #                     curr_img_segment = self.vae.encode(half_img_enc).latent_dist.sample()
 
-                            half_img = target_image * seg_map.cpu().permute(1,2,0).float().detach().numpy()
-                            half_img_enc = torch.tensor(half_img).permute(2, 0, 1).unsqueeze(0).to(latent_model_input.device)
-                            half_img_enc = (half_img_enc - 0.5) * 2
-                            targ_img_segment = self.vae.encode(half_img_enc).latent_dist.sample()
+        #                     half_img = target_image * seg_map.cpu().permute(1,2,0).float().detach().numpy()
+        #                     half_img_enc = torch.tensor(half_img).permute(2, 0, 1).unsqueeze(0).to(latent_model_input.device)
+        #                     half_img_enc = (half_img_enc - 0.5) * 2
+        #                     targ_img_segment = self.vae.encode(half_img_enc).latent_dist.sample()
 
-                            diffs.append(targ_img_segment - curr_img_segment)
-
-
+        #                     diffs.append(targ_img_segment - curr_img_segment)
 
 
-                            print(diffs[0].shape)
+
+
+        #                     print(diffs[0].shape)
 
 
 
                             
 
-                        self.unet.zero_grad()
-                        ### NOTE: this line might be the reason for retain_graph True, since some cache not released with backward()
-                        # with torch.autocast(device_type='cuda', dtype=torch.float16):
-                        noise_pred = self.unet(noisy_latents,
-                                            t,
-                                            encoder_hidden_states=context,
-                                            cross_attention_kwargs=cross_attention_kwargs,
-                                            ).sample
-                        ### NOTE: consider modify the above for loss scaler
-                        noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                        noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
-                        latents_prev_rec = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
+        #                 self.unet.zero_grad()
+        #                 ### NOTE: this line might be the reason for retain_graph True, since some cache not released with backward()
+        #                 # with torch.autocast(device_type='cuda', dtype=torch.float16):
+        #                 noise_pred = self.unet(noisy_latents,
+        #                                     t,
+        #                                     encoder_hidden_states=context,
+        #                                     cross_attention_kwargs=cross_attention_kwargs,
+        #                                     ).sample
+        #                 ### NOTE: consider modify the above for loss scaler
+        #                 noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+        #                 noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
+        #                 latents_prev_rec = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
 
-                        # temp_latents = 1 / self.vae.config.scaling_factor * latent_model_input
-                        # curr_image = self.vae.decode(temp_latents).sample
-                        # curr_image = (curr_image / 2 + 0.5).clamp(0, 1)
-                        # # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
-                        # curr_image = curr_image.cpu().permute(0, 2, 3, 1).float().detach().numpy()[0]
-                        # from PIL import Image
-                        # # import pdb; pdb.set_trace()
-                        # curr_image_save = Image.fromarray((curr_image * 255).astype(np.uint8))
-                        # # Save the image as a JPEG file
-                        # curr_image_save.save(f'whole_img_{i}_{j}.jpg')
-                        # # import pdb; pdb.set_trace()
-                        # half_img = curr_image * seg_maps_full[0].cpu().permute(1,2,0).float().detach().numpy()
-                        # # import pdb; pdb.set_trace()
-                        # half_img_save = Image.fromarray((half_img * 255).astype(np.uint8))
-                        # half_img_save.save(f'half_img_{i}_{j}.jpg')
+        #                 # temp_latents = 1 / self.vae.config.scaling_factor * latent_model_input
+        #                 # curr_image = self.vae.decode(temp_latents).sample
+        #                 # curr_image = (curr_image / 2 + 0.5).clamp(0, 1)
+        #                 # # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
+        #                 # curr_image = curr_image.cpu().permute(0, 2, 3, 1).float().detach().numpy()[0]
+        #                 # from PIL import Image
+        #                 # # import pdb; pdb.set_trace()
+        #                 # curr_image_save = Image.fromarray((curr_image * 255).astype(np.uint8))
+        #                 # # Save the image as a JPEG file
+        #                 # curr_image_save.save(f'whole_img_{i}_{j}.jpg')
+        #                 # # import pdb; pdb.set_trace()
+        #                 # half_img = curr_image * seg_maps_full[0].cpu().permute(1,2,0).float().detach().numpy()
+        #                 # # import pdb; pdb.set_trace()
+        #                 # half_img_save = Image.fromarray((half_img * 255).astype(np.uint8))
+        #                 # half_img_save.save(f'half_img_{i}_{j}.jpg')
 
-                        # half_img_enc = torch.tensor(half_img).permute(2, 0, 1).unsqueeze(0).to(latent_model_input.device)
-                        # half_img_enc = (half_img_enc - 0.5) * 2
-                        # with torch.no_grad():
-                        #     encoded_latents = self.vae.encode(half_img_enc).latent_dist.sample()
-                        #     half_img_enc = self.vae.decode(encoded_latents).sample
-                        # half_img_enc = (half_img_enc / 2 + 0.5).clamp(0, 1)
-                        # # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
-                        # half_img_enc = half_img_enc.cpu().permute(0, 2, 3, 1).float().numpy()[0]
-                        # half_img_enc = Image.fromarray((half_img_enc * 255).astype(np.uint8))
-                        # # Save the image as a JPEG file
-                        # half_img_enc.save(f'half_img_enc_{i}_{j}.jpg')
+        #                 # half_img_enc = torch.tensor(half_img).permute(2, 0, 1).unsqueeze(0).to(latent_model_input.device)
+        #                 # half_img_enc = (half_img_enc - 0.5) * 2
+        #                 # with torch.no_grad():
+        #                 #     encoded_latents = self.vae.encode(half_img_enc).latent_dist.sample()
+        #                 #     half_img_enc = self.vae.decode(encoded_latents).sample
+        #                 # half_img_enc = (half_img_enc / 2 + 0.5).clamp(0, 1)
+        #                 # # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
+        #                 # half_img_enc = half_img_enc.cpu().permute(0, 2, 3, 1).float().numpy()[0]
+        #                 # half_img_enc = Image.fromarray((half_img_enc * 255).astype(np.uint8))
+        #                 # # Save the image as a JPEG file
+        #                 # half_img_enc.save(f'half_img_enc_{i}_{j}.jpg')
 
-                        # assert False
+        #                 # assert False
 
                         
 
-                        # print('shape', curr_image.shape)
+        #                 # print('shape', curr_image.shape)
 
-                        loss = F.mse_loss(noise_pred, noise + sum(diffs), reduction="none").mean([1, 2, 3]).mean() * 10
+        #                 loss = F.mse_loss(noise_pred, noise + sum(diffs), reduction="none").mean([1, 2, 3]).mean() * 10
 
-                        loss.backward(retain_graph=False)
-                        opt.step()
-                        opt.zero_grad()
+        #                 loss.backward(retain_graph=False)
+        #                 opt.step()
+        #                 opt.zero_grad()
                                 
-                        if j % print_freq == 0:
-                            print(f'Step {i}, Null text loop {j} Loss: {loss.item():0.6f}')
+        #                 if j % print_freq == 0:
+        #                     print(f'Step {i}, Null text loop {j} Loss: {loss.item():0.6f}')
                             
-                ### ============== 2nd part END: NULL INVERSION ==============
-                torch.cuda.empty_cache()
-                prompt_embeds=torch.cat([uncond_embeddings, cond_embeddings])
-                uncond_embeddings_list.append(uncond_embeddings.cpu().detach())
+        #         ### ============== 2nd part END: NULL INVERSION ==============
+        #         torch.cuda.empty_cache()
+        #         prompt_embeds=torch.cat([uncond_embeddings, cond_embeddings])
+        #         uncond_embeddings_list.append(uncond_embeddings.cpu().detach())
 
-                ### NOTE: this line might be the reason for retain_graph True, since some cache not released with backward()
-                with torch.no_grad():
-                    noise = torch.randn(latent_model_input.shape).to(latent_model_input.device)
-                    print(noise.shape)
+        #         ### NOTE: this line might be the reason for retain_graph True, since some cache not released with backward()
+        #         with torch.no_grad():
+        #             noise = torch.randn(latent_model_input.shape).to(latent_model_input.device)
+        #             print(noise.shape)
 
-                    noisy_latents = self.scheduler.add_noise(latent_model_input, noise, t)
-                    noise_pred = self.unet( 
-                                    noisy_latents,
-                                    t,
-                                    encoder_hidden_states=prompt_embeds,
-                                    cross_attention_kwargs=cross_attention_kwargs,
-                                    ).sample
+        #             noisy_latents = self.scheduler.add_noise(latent_model_input, noise, t)
+        #             noise_pred = self.unet( 
+        #                             noisy_latents,
+        #                             t,
+        #                             encoder_hidden_states=prompt_embeds,
+        #                             cross_attention_kwargs=cross_attention_kwargs,
+        #                             ).sample
                 
-                # perform guidance
-                if do_classifier_free_guidance:
-                    noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                    noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
+        #         # perform guidance
+        #         if do_classifier_free_guidance:
+        #             noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+        #             noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
 
-                # compute the previous noisy sample x_t -> x_t-1
-                latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
+        #         # compute the previous noisy sample x_t -> x_t-1
+        #         latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
 
-                # call the callback, if provided
-                if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
-                    progress_bar.update()
+        #         # call the callback, if provided
+        #         if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
+        #             progress_bar.update()
 
-                print('reached')
+        #         print('reached')
                 
                 # torch.cuda.empty_cache()
                 # cond_embeds = self.text_encoder.get_input_embeddings().weight[placeholder_token_id]
