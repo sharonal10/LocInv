@@ -16,9 +16,9 @@ INIT_TOKEN2='dog'
 
 MAX_ITER=0
 
-lam_cos=5.0 
-lam_iou=5.0
-lam_kl=5.0
+lam_cos=1.0 
+lam_iou=1.0
+lam_kl=1.0
 
 CUDA_VISIBLE_DEVICES=0 python _3_dpl_seg_inv.py \
     --input_image ${IMG_FOLDER}/${FILE_NAME}.${IMG_FORMAT} \
@@ -33,4 +33,4 @@ CUDA_VISIBLE_DEVICES=0 python _3_dpl_seg_inv.py \
     --softmax_op \
     --seg_dirs seg_dirs/${FILE_NAME} \
     --target_image ${IMG_FOLDER}/catdog_old.${IMG_FORMAT} \
-    --num_ddim_steps 50
+    --num_ddim_steps 5
