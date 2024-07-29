@@ -240,7 +240,7 @@ if __name__=="__main__":
     target_image = Image.open(args.target_image).convert("RGB").resize((512, 512))
     target_image = np.array(target_image) / 255.0
     print(np.max(target_image), np.min(target_image), target_image.shape)
-    target_image = torch.from_numpy(target_image).permute(2, 0, 1).float()
+    target_image = torch.from_numpy(target_image).float()
         
     rec_pil_train, attention_maps, uncond_embeddings_list, cond_embeddings_list = pipeline(
         caption,
