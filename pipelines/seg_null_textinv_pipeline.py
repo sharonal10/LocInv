@@ -1021,10 +1021,14 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                 with torch.enable_grad():
                     for j in range(null_inner_steps):
                         context=torch.cat([uncond_embeddings, cond_embeddings])
+                        noise = torch.randn(latent_model_input.shape).to(latent_model_input.device)
+                        print(noise.shape)
+
+                        noisy_latents = self.scheduler.add_noise(latent_model_input, noise, t)
                         self.unet.zero_grad()
                         ### NOTE: this line might be the reason for retain_graph True, since some cache not released with backward()
                         # with torch.autocast(device_type='cuda', dtype=torch.float16):
-                        noise_pred = self.unet(latent_model_input,
+                        noise_pred = self.unet(noisy_latents,
                                             t,
                                             encoder_hidden_states=context,
                                             cross_attention_kwargs=cross_attention_kwargs,
@@ -1033,7 +1037,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
                         noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
                         latents_prev_rec = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
-                        loss = F.mse_loss(latents_prev_rec, latent_prev)
+                        loss = F.mse_loss(noise_pred, noise, reduction="none").mean([1, 2, 3]).mean()
 
                         loss.backward(retain_graph=False)
                         opt.step()
@@ -1049,8 +1053,12 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
 
                 ### NOTE: this line might be the reason for retain_graph True, since some cache not released with backward()
                 with torch.no_grad():
+                    noise = torch.randn(latent_model_input.shape).to(latent_model_input.device)
+                    print(noise.shape)
+
+                    noisy_latents = self.scheduler.add_noise(latent_model_input, noise, t)
                     noise_pred = self.unet( 
-                                    latent_model_input,
+                                    noisy_latents,
                                     t,
                                     encoder_hidden_states=prompt_embeds,
                                     cross_attention_kwargs=cross_attention_kwargs,
