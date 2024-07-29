@@ -135,9 +135,12 @@ if __name__=="__main__":
     token_embeds = text_encoder.get_input_embeddings().weight.data
     
     index_no_updates = torch.ones(len(tokenizer), dtype=bool)
+
+    token_embeds = text_encoder.get_input_embeddings().weight.data
+    mean_embedding = token_embeds.mean(dim=0)
     
     for ind in range(len(placeholder_token_id)):
-        token_embeds[placeholder_token_id[ind]] = token_embeds[initializer_token_id[ind]]
+        token_embeds[placeholder_token_id[ind]] = mean_embedding # token_embeds[initializer_token_id[ind]]
         index_no_updates[placeholder_token_id[ind]]=False
         
     # NOTE: Freeze all parameters except for the token embeddings in text encoder
