@@ -1,10 +1,10 @@
 .vscode
 blip_embed
-images
+# images
 outputs
 *__pycache__*
 # *.sh
-*.png
+# *.png
 output
 gen_imgs
 test.py
