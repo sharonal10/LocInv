@@ -1023,7 +1023,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                     for j in range(null_inner_steps):
                         context=torch.cat([uncond_embeddings, cond_embeddings])
                         noise = torch.randn(latent_model_input.shape).to(latent_model_input.device)
-                        print(noise.shape)
+                        # print(noise.shape)
 
                         noisy_latents = self.scheduler.add_noise(latent_model_input, noise, t)
                         self.unet.zero_grad()
@@ -1049,8 +1049,8 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         curr_image_save = Image.fromarray((curr_image * 255).astype(np.uint8))
                         # Save the image as a JPEG file
                         curr_image_save.save(f'whole_img_{i}_{j}.jpg')
-                        half_img = curr_image
-                        half_img[:, half_img.shape[1] // 2:, :] = 0
+                        import pdb; pdb.set_trace()
+                        half_img = curr_image * np.expand_dims(seg_maps[0].cpu().float().detach().numpy(), axis=-1)
                         half_img_save = Image.fromarray((half_img * 255).astype(np.uint8))
                         half_img_save.save(f'half_img_{i}_{j}.jpg')
 
@@ -1070,7 +1070,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
 
                         
 
-                        print('shape', curr_image.shape)
+                        # print('shape', curr_image.shape)
 
                         loss = F.mse_loss(noise_pred, noise, reduction="none").mean([1, 2, 3]).mean()
 
