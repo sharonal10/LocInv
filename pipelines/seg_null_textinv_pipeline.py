@@ -991,7 +991,9 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
 
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
-                
+                latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
+                latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
+
                 torch.cuda.empty_cache()
                 cond_embeds = self.text_encoder.get_input_embeddings().weight[placeholder_token_id]
                 cond_embeddings_list.append(cond_embeds.detach().cpu())
@@ -1008,58 +1010,47 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         negative_prompt_embeds=negative_prompt_embeds,
                     )
                 
-                ### ============== Editing ==============
+                ### ============== 2nd part START: NULL INVERSION ==============
                 uncond_embeddings, cond_embeddings = prompt_embeds.chunk(2)
                 latent_prev = all_latents[len(all_latents) - i - 2]
                 
                 uncond_embeddings = uncond_embeddings.detach().clone().requires_grad_(True)
                 cond_embeddings = cond_embeddings.detach().clone().requires_grad_(False)
                 opt = torch.optim.Adam([uncond_embeddings], lr=1e-2 * (1. - i / 100.))
-
-                
-                latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
-                latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
                 
                 with torch.enable_grad():
                     for j in range(null_inner_steps):
                         context=torch.cat([uncond_embeddings, cond_embeddings])
                         self.unet.zero_grad()
-                        noise = torch.randn(latent_model_input.shape).to(latent_model_input.device)
-                        print(noise.shape)
-
-                        noisy_latents = self.scheduler.add_noise(latent_model_input, noise, t)
-
-                        noise_pred = self.unet(noisy_latents,
-                                                t,
-                                                encoder_hidden_states=context,
-                                                cross_attention_kwargs=cross_attention_kwargs,
-                                                ).sample
-                        
-                        latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
-                        
-                        loss = F.mse_loss(noise_pred, noise, reduction="none").mean([1, 2, 3]).mean()
+                        ### NOTE: this line might be the reason for retain_graph True, since some cache not released with backward()
+                        # with torch.autocast(device_type='cuda', dtype=torch.float16):
+                        noise_pred = self.unet(latent_model_input,
+                                            t,
+                                            encoder_hidden_states=context,
+                                            cross_attention_kwargs=cross_attention_kwargs,
+                                            ).sample
+                        ### NOTE: consider modify the above for loss scaler
+                        noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+                        noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
+                        latents_prev_rec = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
+                        loss = F.mse_loss(latents_prev_rec, latent_prev)
 
                         loss.backward(retain_graph=False)
                         opt.step()
                         opt.zero_grad()
                                 
                         if j % print_freq == 0:
-                            print(f'Step {i}, Editing loop {j} Loss: {loss.item():0.6f}')
-
+                            print(f'Step {i}, Null text loop {j} Loss: {loss.item():0.6f}')
+                            
+                ### ============== 2nd part END: NULL INVERSION ==============
                 torch.cuda.empty_cache()
                 prompt_embeds=torch.cat([uncond_embeddings, cond_embeddings])
                 uncond_embeddings_list.append(uncond_embeddings.cpu().detach())
 
-                
-
                 ### NOTE: this line might be the reason for retain_graph True, since some cache not released with backward()
                 with torch.no_grad():
-                    noise = torch.randn(latent_model_input.shape).to(latent_model_input.device)
-                    print(noise.shape)
-
-                    noisy_latents = self.scheduler.add_noise(latent_model_input, noise, t)
                     noise_pred = self.unet( 
-                                    noisy_latents,
+                                    latent_model_input,
                                     t,
                                     encoder_hidden_states=prompt_embeds,
                                     cross_attention_kwargs=cross_attention_kwargs,
@@ -1076,6 +1067,89 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                 # call the callback, if provided
                 if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
                     progress_bar.update()
+
+                print('reached')
+                
+                # torch.cuda.empty_cache()
+                # cond_embeds = self.text_encoder.get_input_embeddings().weight[placeholder_token_id]
+                # cond_embeddings_list.append(cond_embeds.detach().cpu())
+                # if attention_maps is not None:
+                #     attention_maps_list.append(attention_maps.detach().cpu())
+
+                # prompt_embeds = self._encode_prompt(
+                #         prompt,
+                #         device,
+                #         num_images_per_prompt,
+                #         do_classifier_free_guidance,
+                #         negative_prompt,
+                #         prompt_embeds=None, ### NOTE: reinitialize
+                #         negative_prompt_embeds=negative_prompt_embeds,
+                #     )
+                
+                # ### ============== Editing ==============
+                # uncond_embeddings, cond_embeddings = prompt_embeds.chunk(2)
+                # latent_prev = all_latents[len(all_latents) - i - 2]
+                
+                # uncond_embeddings = uncond_embeddings.detach().clone().requires_grad_(True)
+                # cond_embeddings = cond_embeddings.detach().clone().requires_grad_(False)
+                # opt = torch.optim.Adam([uncond_embeddings], lr=1e-2 * (1. - i / 100.))
+                
+                # with torch.enable_grad():
+                #     for j in range(null_inner_steps):
+                #         context=torch.cat([uncond_embeddings, cond_embeddings])
+                #         self.unet.zero_grad()
+                #         noise = torch.randn(latent_model_input.shape).to(latent_model_input.device)
+                #         print(noise.shape)
+
+                #         noisy_latents = self.scheduler.add_noise(latent_model_input, noise, t)
+
+                #         noise_pred = self.unet(noisy_latents,
+                #                                 t,
+                #                                 encoder_hidden_states=context,
+                #                                 cross_attention_kwargs=cross_attention_kwargs,
+                #                                 ).sample
+                        
+                #         latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
+                        
+                #         loss = F.mse_loss(noise_pred, noise, reduction="none").mean([1, 2, 3]).mean()
+
+                #         loss.backward(retain_graph=False)
+                #         opt.step()
+                #         opt.zero_grad()
+                                
+                #         if j % print_freq == 0:
+                #             print(f'Step {i}, Editing loop {j} Loss: {loss.item():0.6f}')
+
+                # torch.cuda.empty_cache()
+                # prompt_embeds=torch.cat([uncond_embeddings, cond_embeddings])
+                # uncond_embeddings_list.append(uncond_embeddings.cpu().detach())
+
+                
+
+                # ### NOTE: this line might be the reason for retain_graph True, since some cache not released with backward()
+                # with torch.no_grad():
+                #     noise = torch.randn(latent_model_input.shape).to(latent_model_input.device)
+                #     print(noise.shape)
+
+                #     noisy_latents = self.scheduler.add_noise(latent_model_input, noise, t)
+                #     noise_pred = self.unet( 
+                #                     noisy_latents,
+                #                     t,
+                #                     encoder_hidden_states=prompt_embeds,
+                #                     cross_attention_kwargs=cross_attention_kwargs,
+                #                     ).sample
+                
+                # # perform guidance
+                # if do_classifier_free_guidance:
+                #     noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+                #     noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
+
+                # # compute the previous noisy sample x_t -> x_t-1
+                # latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
+
+                # # call the callback, if provided
+                # if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
+                #     progress_bar.update()
 
 
                 
