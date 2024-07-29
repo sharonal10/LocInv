@@ -1027,6 +1027,37 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         # print(noise.shape)
 
                         noisy_latents = self.scheduler.add_noise(latent_model_input, noise, t)
+
+                        diffs = []
+                        with torch.no_grad():
+                            # get all segmented parts for noise calcs
+                            temp_latents = 1 / self.vae.config.scaling_factor * latent_model_input
+                            curr_image = self.vae.decode(temp_latents).sample
+                            curr_image = (curr_image / 2 + 0.5).clamp(0, 1)
+                            # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
+                            curr_image = curr_image.cpu().permute(0, 2, 3, 1).float().detach().numpy()[0]
+                            for seg_map in seg_maps_full:
+                                half_img = curr_image * seg_map.cpu().permute(1,2,0).float().detach().numpy()
+                                half_img_enc = torch.tensor(half_img).permute(2, 0, 1).unsqueeze(0).to(latent_model_input.device)
+                                half_img_enc = (half_img_enc - 0.5) * 2
+                                curr_img_segment = self.vae.encode(half_img_enc).latent_dist.sample()
+
+                                half_img = target_image * seg_map.cpu().permute(1,2,0).float().detach().numpy()
+                                half_img_enc = torch.tensor(half_img).permute(2, 0, 1).unsqueeze(0).to(latent_model_input.device)
+                                half_img_enc = (half_img_enc - 0.5) * 2
+                                targ_img_segment = self.vae.encode(half_img_enc).latent_dist.sample()
+
+                                diffs.append(targ_img_segment - curr_img_segment)
+
+
+
+
+                            print(diffs[0].shape)
+
+
+
+                            
+
                         self.unet.zero_grad()
                         ### NOTE: this line might be the reason for retain_graph True, since some cache not released with backward()
                         # with torch.autocast(device_type='cuda', dtype=torch.float16):
@@ -1040,41 +1071,41 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
                         latents_prev_rec = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
 
-                        temp_latents = 1 / self.vae.config.scaling_factor * latent_model_input
-                        curr_image = self.vae.decode(temp_latents).sample
-                        curr_image = (curr_image / 2 + 0.5).clamp(0, 1)
-                        # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
-                        curr_image = curr_image.cpu().permute(0, 2, 3, 1).float().detach().numpy()[0]
-                        from PIL import Image
-                        # import pdb; pdb.set_trace()
-                        curr_image_save = Image.fromarray((curr_image * 255).astype(np.uint8))
-                        # Save the image as a JPEG file
-                        curr_image_save.save(f'whole_img_{i}_{j}.jpg')
-                        # import pdb; pdb.set_trace()
-                        half_img = curr_image * seg_maps_full[0].cpu().permute(1,2,0).float().detach().numpy()
-                        # import pdb; pdb.set_trace()
-                        half_img_save = Image.fromarray((half_img * 255).astype(np.uint8))
-                        half_img_save.save(f'half_img_{i}_{j}.jpg')
+                        # temp_latents = 1 / self.vae.config.scaling_factor * latent_model_input
+                        # curr_image = self.vae.decode(temp_latents).sample
+                        # curr_image = (curr_image / 2 + 0.5).clamp(0, 1)
+                        # # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
+                        # curr_image = curr_image.cpu().permute(0, 2, 3, 1).float().detach().numpy()[0]
+                        # from PIL import Image
+                        # # import pdb; pdb.set_trace()
+                        # curr_image_save = Image.fromarray((curr_image * 255).astype(np.uint8))
+                        # # Save the image as a JPEG file
+                        # curr_image_save.save(f'whole_img_{i}_{j}.jpg')
+                        # # import pdb; pdb.set_trace()
+                        # half_img = curr_image * seg_maps_full[0].cpu().permute(1,2,0).float().detach().numpy()
+                        # # import pdb; pdb.set_trace()
+                        # half_img_save = Image.fromarray((half_img * 255).astype(np.uint8))
+                        # half_img_save.save(f'half_img_{i}_{j}.jpg')
 
-                        half_img_enc = torch.tensor(half_img).permute(2, 0, 1).unsqueeze(0).to(latent_model_input.device)
-                        half_img_enc = (half_img_enc - 0.5) * 2
-                        with torch.no_grad():
-                            encoded_latents = self.vae.encode(half_img_enc).latent_dist.sample()
-                            half_img_enc = self.vae.decode(encoded_latents).sample
-                        half_img_enc = (half_img_enc / 2 + 0.5).clamp(0, 1)
-                        # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
-                        half_img_enc = half_img_enc.cpu().permute(0, 2, 3, 1).float().numpy()[0]
-                        half_img_enc = Image.fromarray((half_img_enc * 255).astype(np.uint8))
-                        # Save the image as a JPEG file
-                        half_img_enc.save(f'half_img_enc_{i}_{j}.jpg')
+                        # half_img_enc = torch.tensor(half_img).permute(2, 0, 1).unsqueeze(0).to(latent_model_input.device)
+                        # half_img_enc = (half_img_enc - 0.5) * 2
+                        # with torch.no_grad():
+                        #     encoded_latents = self.vae.encode(half_img_enc).latent_dist.sample()
+                        #     half_img_enc = self.vae.decode(encoded_latents).sample
+                        # half_img_enc = (half_img_enc / 2 + 0.5).clamp(0, 1)
+                        # # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
+                        # half_img_enc = half_img_enc.cpu().permute(0, 2, 3, 1).float().numpy()[0]
+                        # half_img_enc = Image.fromarray((half_img_enc * 255).astype(np.uint8))
+                        # # Save the image as a JPEG file
+                        # half_img_enc.save(f'half_img_enc_{i}_{j}.jpg')
 
-                        assert False
+                        # assert False
 
                         
 
                         # print('shape', curr_image.shape)
 
-                        loss = F.mse_loss(noise_pred, noise, reduction="none").mean([1, 2, 3]).mean()
+                        loss = F.mse_loss(noise_pred, noise + sum(diffs), reduction="none").mean([1, 2, 3]).mean()
 
                         loss.backward(retain_graph=False)
                         opt.step()
