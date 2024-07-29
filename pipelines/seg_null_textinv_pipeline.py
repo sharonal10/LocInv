@@ -1043,7 +1043,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         curr_image = self.vae.decode(temp_latents).sample
                         curr_image = (curr_image / 2 + 0.5).clamp(0, 1)
                         # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
-                        curr_image = curr_image.cpu().permute(0, 2, 3, 1).float().numpy()[0]
+                        curr_image = curr_image.cpu().permute(0, 2, 3, 1).float().detach().numpy()[0]
                         from PIL import Image
                         curr_image_save = Image.fromarray(curr_image)
                         # Save the image as a JPEG file
