@@ -1008,7 +1008,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         negative_prompt_embeds=negative_prompt_embeds,
                     )
                 
-                ### ============== 2nd part START: NULL INVERSION ==============
+                ### ============== Editing ==============
                 uncond_embeddings, cond_embeddings = prompt_embeds.chunk(2)
                 latent_prev = all_latents[len(all_latents) - i - 2]
                 
@@ -1025,7 +1025,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                     print(noise.shape)
                     ts = torch.randint(1000, (1,), device=latent_model_input.device)
 
-                    noisy_latents = self.scheduler.add_noise(latent_model_input, noise, timesteps)
+                    noisy_latents = self.scheduler.add_noise(latent_model_input, noise, ts)
 
                     noise_pred = self.unet(noisy_latents,
                                             ts,
