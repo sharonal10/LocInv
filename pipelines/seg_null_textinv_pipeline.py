@@ -1045,6 +1045,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
                         curr_image = curr_image.cpu().permute(0, 2, 3, 1).float().detach().numpy()[0]
                         from PIL import Image
+                        import pdb; pdb.set_trace()
                         curr_image_save = Image.fromarray(curr_image)
                         # Save the image as a JPEG file
                         curr_image_save.save('whole_img.jpg')
