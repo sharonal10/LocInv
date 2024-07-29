@@ -1021,6 +1021,8 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
                 
                 with torch.enable_grad():
+                    context=torch.cat([uncond_embeddings, cond_embeddings])
+                    self.unet.zero_grad()
                     noise = torch.randn(latent_model_input.shape).to(latent_model_input.device)
                     print(noise.shape)
 
