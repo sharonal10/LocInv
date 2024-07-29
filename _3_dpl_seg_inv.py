@@ -23,6 +23,7 @@ def read_segfile(seg_image_path):
 def arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--input_image', type=str, default=None)
+    parser.add_argument('--target_image', type=str, default=None)
     parser.add_argument('--results_folder', type=str, default=None)
     parser.add_argument('--seg_dirs', type=str, default=None)
     
@@ -224,6 +225,11 @@ if __name__=="__main__":
         adj_indices_to_alter = [x-1 for x in args.indices_to_alter]
     else:
         adj_indices_to_alter=None
+
+    target_image = Image.open(args.target_image).convert("RGB").resize((512, 512))
+    target_image = np.array(target_image) / 255.0
+    print(np.max(target_image), np.min(target_image), target_image.shape)
+    target_image = torch.from_numpy(target_image).permute(2, 0, 1).float()
         
     rec_pil_train, attention_maps, uncond_embeddings_list, cond_embeddings_list = pipeline(
         caption,
@@ -258,6 +264,7 @@ if __name__=="__main__":
         softmax_op = args.softmax_op,
         seg_maps=seg_maps,
         loss_type=args.loss_type,
+        target_image=target_image
     )
 
     with open(os.path.join(args.results_folder, 

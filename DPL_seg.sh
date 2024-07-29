@@ -32,4 +32,5 @@ CUDA_VISIBLE_DEVICES=0 python _3_dpl_seg_inv.py \
     --smooth_op \
     --softmax_op \
     --seg_dirs seg_dirs/${FILE_NAME} \
+    --target_image ${IMG_FOLDER}/catdog_old.${IMG_FORMAT} \
     --num_ddim_steps 5

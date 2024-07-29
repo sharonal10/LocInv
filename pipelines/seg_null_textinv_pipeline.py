@@ -713,7 +713,8 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
         lam_kl=0.0,
         lam_sim=0.0,
         lam_adj=0.0,
-        adj_indices_to_alter=None
+        adj_indices_to_alter=None,
+        target_image=None
     ):
         ### NOTE: lower the cuda usage
         # self.vae.to('cpu')
@@ -1037,6 +1038,15 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
                         noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
                         latents_prev_rec = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
+
+                        temp_latents = 1 / self.vae.config.scaling_factor * latents_prev_rec
+                        curr_image = self.vae.decode(temp_latents).sample
+                        curr_image = (curr_image / 2 + 0.5).clamp(0, 1)
+                        # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
+                        # image = image.cpu().permute(0, 2, 3, 1).float().numpy()
+                        print('shape', curr_image.shape)
+
+
                         loss = F.mse_loss(noise_pred, noise, reduction="none").mean([1, 2, 3]).mean()
 
                         loss.backward(retain_graph=False)
@@ -1166,7 +1176,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
         edited_image = self.decode_latents(latents)
 
         # 12. Run the safety checker.
-        edited_image, has_nsfw_concept = self.run_safety_checker(edited_image, device, prompt_embeds.dtype)
+        # edited_image, has_nsfw_concept = self.run_safety_checker(edited_image, device, prompt_embeds.dtype)
 
         # 13. Convert to PIL.
         if output_type == "pil":
