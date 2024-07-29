@@ -1029,25 +1029,25 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         noisy_latents = self.scheduler.add_noise(latent_model_input, noise, t)
 
                         diffs = []
-                        with torch.no_grad():
-                            # get all segmented parts for noise calcs
-                            temp_latents = 1 / self.vae.config.scaling_factor * latent_model_input
-                            curr_image = self.vae.decode(temp_latents).sample
-                            curr_image = (curr_image / 2 + 0.5).clamp(0, 1)
-                            # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
-                            curr_image = curr_image.cpu().permute(0, 2, 3, 1).float().detach().numpy()[0]
-                            for seg_map in seg_maps_full:
-                                half_img = curr_image * seg_map.cpu().permute(1,2,0).float().detach().numpy()
-                                half_img_enc = torch.tensor(half_img).permute(2, 0, 1).unsqueeze(0).to(latent_model_input.device)
-                                half_img_enc = (half_img_enc - 0.5) * 2
-                                curr_img_segment = self.vae.encode(half_img_enc).latent_dist.sample()
+                        # with torch.no_grad():
+                        # get all segmented parts for noise calcs
+                        temp_latents = 1 / self.vae.config.scaling_factor * latent_model_input
+                        curr_image = self.vae.decode(temp_latents).sample
+                        curr_image = (curr_image / 2 + 0.5).clamp(0, 1)
+                        # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
+                        curr_image = curr_image.cpu().permute(0, 2, 3, 1).float().detach().numpy()[0]
+                        for seg_map in seg_maps_full:
+                            half_img = curr_image * seg_map.cpu().permute(1,2,0).float().detach().numpy()
+                            half_img_enc = torch.tensor(half_img).permute(2, 0, 1).unsqueeze(0).to(latent_model_input.device)
+                            half_img_enc = (half_img_enc - 0.5) * 2
+                            curr_img_segment = self.vae.encode(half_img_enc).latent_dist.sample()
 
-                                half_img = target_image * seg_map.cpu().permute(1,2,0).float().detach().numpy()
-                                half_img_enc = torch.tensor(half_img).permute(2, 0, 1).unsqueeze(0).to(latent_model_input.device)
-                                half_img_enc = (half_img_enc - 0.5) * 2
-                                targ_img_segment = self.vae.encode(half_img_enc).latent_dist.sample()
+                            half_img = target_image * seg_map.cpu().permute(1,2,0).float().detach().numpy()
+                            half_img_enc = torch.tensor(half_img).permute(2, 0, 1).unsqueeze(0).to(latent_model_input.device)
+                            half_img_enc = (half_img_enc - 0.5) * 2
+                            targ_img_segment = self.vae.encode(half_img_enc).latent_dist.sample()
 
-                                diffs.append(targ_img_segment - curr_img_segment)
+                            diffs.append(targ_img_segment - curr_img_segment)
 
 
 
