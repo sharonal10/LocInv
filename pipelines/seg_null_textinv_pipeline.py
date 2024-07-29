@@ -1050,8 +1050,20 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         curr_image_save.save('whole_img.jpg')
                         half_img = curr_image
                         half_img[:, half_img.shape[1] // 2:, :] = 0
-                        half_img = Image.fromarray(half_img)
-                        half_img.save('half_img.jpg')
+                        half_img_save = Image.fromarray(half_img)
+                        half_img_save.save('half_img.jpg')
+
+                        half_img_enc = torch.tensor(half_img).permute(2, 0, 1).unsqueeze(0).to(latent_model_input.device)
+                        half_img_enc = (half_img_enc - 0.5) * 2
+                        with torch.no_grad():
+                            encoded_latents = self.vae.encode(half_img_enc).latent_dist.sample()
+                            half_img_enc = self.vae.decode(encoded_latents).sample
+                        half_img_enc = (half_img_enc / 2 + 0.5).clamp(0, 1)
+                        # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
+                        half_img_enc = half_img_enc.cpu().permute(0, 2, 3, 1).float().numpy()[0]
+                        half_img_enc = Image.fromarray(half_img_enc)
+                        # Save the image as a JPEG file
+                        half_img_enc.save('half_img_enc.jpg')
 
                         assert False
 
