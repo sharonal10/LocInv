@@ -1040,7 +1040,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
                         latents_prev_rec = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
 
-                        temp_latents = 1 / self.vae.config.scaling_factor * latents_prev_rec
+                        temp_latents = 1 / self.vae.config.scaling_factor * latent_model_input
                         curr_image = self.vae.decode(temp_latents).sample
                         curr_image = (curr_image / 2 + 0.5).clamp(0, 1)
                         # we always cast to float32 as this does not cause significant overhead and is compatible with bfloat16
@@ -1051,8 +1051,8 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         # Save the image as a JPEG file
                         curr_image_save.save(f'whole_img_{i}_{j}.jpg')
                         # import pdb; pdb.set_trace()
-                        half_img = curr_image * np.expand_dims(seg_maps_full[0].cpu().permute(1,2,0).float().detach().numpy(), axis=-1)
-                        import pdb; pdb.set_trace()
+                        half_img = curr_image * seg_maps_full[0].cpu().permute(1,2,0).float().detach().numpy()
+                        # import pdb; pdb.set_trace()
                         half_img_save = Image.fromarray((half_img * 255).astype(np.uint8))
                         half_img_save.save(f'half_img_{i}_{j}.jpg')
 
@@ -1068,7 +1068,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         # Save the image as a JPEG file
                         half_img_enc.save(f'half_img_enc_{i}_{j}.jpg')
 
-                        # assert False
+                        assert False
 
                         
 
