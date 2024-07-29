@@ -172,7 +172,7 @@ if __name__=="__main__":
         inv_latents[ind] = inv_latents[ind].cpu().cuda()
     
     ### NOTE: include prompt files if provides
-    if args.prompt_file is None and args.prompt_str is None:
+    if args.prompt_file is None:
         args.prompt_file=os.path.join(args.results_folder, f"prompt.txt")
         
     if os.path.isfile(args.prompt_file):
