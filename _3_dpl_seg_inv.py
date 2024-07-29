@@ -180,6 +180,8 @@ if __name__=="__main__":
         args.indices_to_alter=[]
         seg_search_words=[]
 
+        import pdb; pdb.set_trace()
+
         for ind in range(len(placeholder_token_id)):
             if args.initializer_token[ind] in caption_list:
                 plh_id = caption_list.index(args.initializer_token[ind])
