@@ -1105,7 +1105,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
 
                         # print('shape', curr_image.shape)
 
-                        loss = F.mse_loss(noise_pred, noise + sum(diffs), reduction="none").mean([1, 2, 3]).mean()
+                        loss = F.mse_loss(noise_pred, noise + sum(diffs), reduction="none").mean([1, 2, 3]).mean() * 10
 
                         loss.backward(retain_graph=False)
                         opt.step()
