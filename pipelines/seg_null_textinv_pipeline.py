@@ -988,6 +988,65 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                 if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
                     progress_bar.update()
 
+
+        with self.progress_bar(total=num_inference_steps) as progress_bar:
+            for i, t in enumerate(timesteps):
+                
+                torch.cuda.empty_cache()
+                cond_embeds = self.text_encoder.get_input_embeddings().weight[placeholder_token_id]
+                cond_embeddings_list.append(cond_embeds.detach().cpu())
+                if attention_maps is not None:
+                    attention_maps_list.append(attention_maps.detach().cpu())
+
+                prompt_embeds = self._encode_prompt(
+                        prompt,
+                        device,
+                        num_images_per_prompt,
+                        do_classifier_free_guidance,
+                        negative_prompt,
+                        prompt_embeds=None, ### NOTE: reinitialize
+                        negative_prompt_embeds=negative_prompt_embeds,
+                    )
+                
+                ### ============== 2nd part START: NULL INVERSION ==============
+                uncond_embeddings, cond_embeddings = prompt_embeds.chunk(2)
+                latent_prev = all_latents[len(all_latents) - i - 2]
+                
+                uncond_embeddings = uncond_embeddings.detach().clone().requires_grad_(True)
+                cond_embeddings = cond_embeddings.detach().clone().requires_grad_(False)
+                opt = torch.optim.Adam([uncond_embeddings], lr=1e-2 * (1. - i / 100.))
+
+                
+                latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
+                latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
+                
+                with torch.enable_grad():
+                    noise = torch.randn(latent_model_input.shape).to(latent_model_input.device)
+                    print(noise.shape)
+                    ts = torch.randint(1000, (1,), device=latent_model_input.device)
+
+                    noisy_latents = self.scheduler.add_noise(latent_model_input, noise, timesteps)
+
+                    noise_pred = self.unet(noisy_latents,
+                                            ts,
+                                            encoder_hidden_states=context,
+                                            cross_attention_kwargs=cross_attention_kwargs,
+                                            ).sample
+                    
+                    latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
+                    
+                    loss = F.mse_loss(noise_pred, noise, reduction="none").mean([1, 2, 3]).mean()
+
+                    loss.backward(retain_graph=False)
+                    opt.step()
+                    opt.zero_grad()
+                            
+                    if j % print_freq == 0:
+                        print(f'Step {i}, Editing loop {j} Loss: {loss.item():0.6f}')
+
+
+                
+
         # 11. Post-process the latents.
         edited_image = self.decode_latents(latents)
 

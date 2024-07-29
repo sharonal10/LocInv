@@ -42,4 +42,5 @@ python _4_image_edit.py \
 --negative_guidance_scale 7.5 \
 --placeholder_token ${PLACEHOLDER1} ${PLACEHOLDER2} \
 --initializer_token ${INIT_TOKEN1} ${INIT_TOKEN2} \
---replaced_embed_folder output/catdog_old2
+--replaced_embed_folder output/catdog_old2 \
+--num_ddim_steps 5
