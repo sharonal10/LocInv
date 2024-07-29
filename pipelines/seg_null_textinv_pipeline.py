@@ -1052,6 +1052,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         curr_image_save.save(f'whole_img_{i}_{j}.jpg')
                         # import pdb; pdb.set_trace()
                         half_img = curr_image * np.expand_dims(seg_maps_full[0].cpu().permute(1,2,0).float().detach().numpy(), axis=-1)
+                        import pdb; pdb.set_trace()
                         half_img_save = Image.fromarray((half_img * 255).astype(np.uint8))
                         half_img_save.save(f'half_img_{i}_{j}.jpg')
 
