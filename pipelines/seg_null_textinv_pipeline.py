@@ -1048,11 +1048,11 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         # import pdb; pdb.set_trace()
                         curr_image_save = Image.fromarray((curr_image * 255).astype(np.uint8))
                         # Save the image as a JPEG file
-                        curr_image_save.save('whole_img.jpg')
+                        curr_image_save.save(f'whole_img_{i}_{j}.jpg')
                         half_img = curr_image
                         half_img[:, half_img.shape[1] // 2:, :] = 0
                         half_img_save = Image.fromarray((half_img * 255).astype(np.uint8))
-                        half_img_save.save('half_img.jpg')
+                        half_img_save.save(f'half_img_{i}_{j}.jpg')
 
                         half_img_enc = torch.tensor(half_img).permute(2, 0, 1).unsqueeze(0).to(latent_model_input.device)
                         half_img_enc = (half_img_enc - 0.5) * 2
@@ -1064,9 +1064,9 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                         half_img_enc = half_img_enc.cpu().permute(0, 2, 3, 1).float().numpy()[0]
                         half_img_enc = Image.fromarray((half_img_enc * 255).astype(np.uint8))
                         # Save the image as a JPEG file
-                        half_img_enc.save('half_img_enc.jpg')
+                        half_img_enc.save(f'half_img_enc_{i}_{j}.jpg')
 
-                        assert False
+                        # assert False
 
                         
 
