@@ -1023,12 +1023,11 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                 with torch.enable_grad():
                     noise = torch.randn(latent_model_input.shape).to(latent_model_input.device)
                     print(noise.shape)
-                    ts = torch.randint(1000, (1,), device=latent_model_input.device)
 
-                    noisy_latents = self.scheduler.add_noise(latent_model_input, noise, ts)
+                    noisy_latents = self.scheduler.add_noise(latent_model_input, noise, t)
 
                     noise_pred = self.unet(noisy_latents,
-                                            ts,
+                                            t,
                                             encoder_hidden_states=context,
                                             cross_attention_kwargs=cross_attention_kwargs,
                                             ).sample
