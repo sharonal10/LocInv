@@ -42,4 +42,4 @@ python _4_image_edit.py \
 --negative_guidance_scale 7.5 \
 --placeholder_token ${PLACEHOLDER1} \
 --initializer_token ${INIT_TOKEN1} \
---replaced_embed_folder output/rendered_chair_5
+--replaced_embed_folder output/rendered_chair
