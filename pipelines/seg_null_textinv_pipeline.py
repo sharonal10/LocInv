@@ -1052,7 +1052,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
 
 
 
-                            print(diffs[0].shape)
+                            # print(diffs[0].shape)
 
 
 
@@ -1122,7 +1122,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                 ### NOTE: this line might be the reason for retain_graph True, since some cache not released with backward()
                 with torch.no_grad():
                     noise = torch.randn(latent_model_input.shape).to(latent_model_input.device)
-                    print(noise.shape)
+                    # print(noise.shape)
 
                     noisy_latents = self.scheduler.add_noise(latent_model_input, noise, t)
                     noise_pred = self.unet( 
