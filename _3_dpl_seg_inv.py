@@ -94,6 +94,8 @@ def arguments():
     ### NOTE: textual inversion parameters
     parser.add_argument('--placeholder_token', nargs='+', type=str, default=None)
     parser.add_argument('--initializer_token', nargs='+', type=str, default=None)
+
+    parser.add_argument('--exp_name', default='exp')
     args = parser.parse_args()
     return args
 
@@ -105,7 +107,7 @@ if __name__=="__main__":
     sd_model_ckpt = args.model_path
     
     ### NOTE: change the postfix later
-    postfix = f'cos_al_{args.alpha_cos}_beta_{args.beta_cos}_lam_{args.lam_cos}_'+ \
+    postfix = f'{args.exp_name}-cos_al_{args.alpha_cos}_beta_{args.beta_cos}_lam_{args.lam_cos}_'+ \
                 f'iou_al_{args.alpha_iou}_beta_{args.beta_iou}_lam_{args.lam_iou}_'+ \
                     f'kl_al_{args.alpha_kl}_beta_{args.beta_kl}_lam_{args.lam_kl}_'+ \
                         f'adj_al_{args.alpha_adj}_beta_{args.beta_adj}_lam_{args.lam_adj}_'+ \
