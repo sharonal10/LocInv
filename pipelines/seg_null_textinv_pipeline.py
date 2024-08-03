@@ -828,11 +828,11 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
 
                     for j in range(attn_inner_steps):
                         encoder_hidden_states = self.text_encoder(text_input_ids.to(device))[0].to(dtype=torch.float32)
-                        # noise_pred = self.unet(latents,
-                        #                     t,
-                        #                     encoder_hidden_states=encoder_hidden_states,
-                        #                     cross_attention_kwargs=cross_attention_kwargs,
-                        #                     ).sample
+                        noise_pred = self.unet(latents,
+                                            t,
+                                            encoder_hidden_states=encoder_hidden_states,
+                                            cross_attention_kwargs=cross_attention_kwargs,
+                                            ).sample
                         self.unet.zero_grad()
                         # Get max activation value for each subject token
                         _, attention_maps = self._aggregate_and_get_max_attention_per_token(
