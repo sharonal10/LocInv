@@ -820,6 +820,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                 print(target_string)     
 
                 with torch.enable_grad():
+                    print(i)
                     if i > 0:
                         break
                     ### NOTE: Initialize the optimizer and update parameters
