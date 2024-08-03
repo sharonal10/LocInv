@@ -1376,7 +1376,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
         edited_image = self.decode_latents(latents)
 
         # 12. Run the safety checker.
-        edited_image, has_nsfw_concept = self.run_safety_checker(edited_image, device, prompt_embeds.dtype)
+        # edited_image, has_nsfw_concept = self.run_safety_checker(edited_image, device, prompt_embeds.dtype)
 
         # 13. Convert to PIL.
         if output_type == "pil":
