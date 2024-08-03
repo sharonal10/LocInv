@@ -819,102 +819,101 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                 
                 print(target_string)     
                 
-                if i == 0:
-                    with torch.enable_grad():
-                        ### NOTE: Initialize the optimizer and update parameters
-                        cond_optim = torch.optim.AdamW(self.text_encoder.get_input_embeddings().parameters())
-                        attention_maps=None
+                with torch.enable_grad():
+                    ### NOTE: Initialize the optimizer and update parameters
+                    cond_optim = torch.optim.AdamW(self.text_encoder.get_input_embeddings().parameters())
+                    attention_maps=None
 
-                        for j in range(attn_inner_steps):
-                            encoder_hidden_states = self.text_encoder(text_input_ids.to(device))[0].to(dtype=torch.float32)
-                            noise_pred = self.unet(latents,
-                                                t,
-                                                encoder_hidden_states=encoder_hidden_states,
-                                                cross_attention_kwargs=cross_attention_kwargs,
-                                                ).sample
+                    for j in range(attn_inner_steps * 10 if i == 0 else attn_inner_steps):
+                        encoder_hidden_states = self.text_encoder(text_input_ids.to(device))[0].to(dtype=torch.float32)
+                        noise_pred = self.unet(latents,
+                                            t,
+                                            encoder_hidden_states=encoder_hidden_states,
+                                            cross_attention_kwargs=cross_attention_kwargs,
+                                            ).sample
+                        self.unet.zero_grad()
+                        # Get max activation value for each subject token
+                        _, attention_maps = self._aggregate_and_get_max_attention_per_token(
+                                                                                    indices=token_indices,
+                                                                                    smooth_op=smooth_op,
+                                                                                    softmax_op=softmax_op)
+                        if (lam_cos+lam_iou) == 0.0:
+                            # print('no need to backpropagate')
                             self.unet.zero_grad()
-                            # Get max activation value for each subject token
-                            _, attention_maps = self._aggregate_and_get_max_attention_per_token(
-                                                                                        indices=token_indices,
-                                                                                        smooth_op=smooth_op,
-                                                                                        softmax_op=softmax_op)
-                            if (lam_cos+lam_iou) == 0.0:
-                                # print('no need to backpropagate')
-                                self.unet.zero_grad()
-                                torch.cuda.empty_cache()
-                                break
+                            torch.cuda.empty_cache()
+                            break
 
-                            # if loss_type=='cosine':
-                            #     cosine_loss = self._compute_cosine_seg(attention_maps, indices_to_alter, seg_maps)
-                            #     print_string = f"Step {i}, Attend {j} | cosine Loss: {cosine_loss.item():0.6f}" 
-                            #     loss = cosine_loss 
-                            # elif loss_type=='iou':
-                            #     cosine_loss = self._compute_IoU_loss(attention_maps, indices_to_alter, seg_maps)
-                            #     print_string = f"Step {i}, Attend {j} | cosine Loss: {cosine_loss.item():0.6f}" 
-                            #     loss = cosine_loss 
-                            # elif loss_type=='corner':
-                            #     cosine_loss = self._compute_IoU_loss(attention_maps, indices_to_alter, seg_maps)
-                            #     kl_loss = self._compute_corner_loss(attention_maps, indices_to_alter, seg_maps)
-                            #     print_string = f"Step {i}, Attend {j} | cosine Loss: {cosine_loss.item():0.6f} ; kl Loss: {kl_loss.item():0.6f}" 
-                            #     loss = cosine_loss + kl_loss
-                            # else:
-                            #     raise NotImplementedError
-                                                                                
-                            if lam_cos > 0.0:
-                                cosine_loss = self._compute_cosine_seg(attention_maps, indices_to_alter, seg_maps)    
-                            else:
-                                cosine_loss = torch.Tensor([0.0]).cuda()
+                        # if loss_type=='cosine':
+                        #     cosine_loss = self._compute_cosine_seg(attention_maps, indices_to_alter, seg_maps)
+                        #     print_string = f"Step {i}, Attend {j} | cosine Loss: {cosine_loss.item():0.6f}" 
+                        #     loss = cosine_loss 
+                        # elif loss_type=='iou':
+                        #     cosine_loss = self._compute_IoU_loss(attention_maps, indices_to_alter, seg_maps)
+                        #     print_string = f"Step {i}, Attend {j} | cosine Loss: {cosine_loss.item():0.6f}" 
+                        #     loss = cosine_loss 
+                        # elif loss_type=='corner':
+                        #     cosine_loss = self._compute_IoU_loss(attention_maps, indices_to_alter, seg_maps)
+                        #     kl_loss = self._compute_corner_loss(attention_maps, indices_to_alter, seg_maps)
+                        #     print_string = f"Step {i}, Attend {j} | cosine Loss: {cosine_loss.item():0.6f} ; kl Loss: {kl_loss.item():0.6f}" 
+                        #     loss = cosine_loss + kl_loss
+                        # else:
+                        #     raise NotImplementedError
+                                                                            
+                        if lam_cos > 0.0:
+                            cosine_loss = self._compute_cosine_seg(attention_maps, indices_to_alter, seg_maps)    
+                        else:
+                            cosine_loss = torch.Tensor([0.0]).cuda()
 
-                            if lam_iou > 0.0:
-                                iou_loss = self._compute_IoU_loss(attention_maps, indices_to_alter, seg_maps)    
-                            else:
-                                iou_loss = torch.Tensor([0.0]).cuda()
+                        if lam_iou > 0.0:
+                            iou_loss = self._compute_IoU_loss(attention_maps, indices_to_alter, seg_maps)    
+                        else:
+                            iou_loss = torch.Tensor([0.0]).cuda()
 
-                            if lam_kl > 0.0:
-                                kl_loss = self._compute_corner_loss(attention_maps, indices_to_alter, seg_maps)    
-                            else:
-                                kl_loss = torch.Tensor([0.0]).cuda()
+                        if lam_kl > 0.0:
+                            kl_loss = self._compute_corner_loss(attention_maps, indices_to_alter, seg_maps)    
+                        else:
+                            kl_loss = torch.Tensor([0.0]).cuda()
 
-                            if lam_adj > 0.0 and (adj_indices_to_alter is not None):
-                                adj_loss = self._compute_cosine_adj(attention_maps, indices_to_alter, adj_indices_to_alter)    
-                            else:
-                                adj_loss = torch.Tensor([0.0]).cuda()
-                                
-                            # if lam_sim > 0.0:
-                            #     sim_loss = self._compute_cosine(attention_maps, indices_to_alter)    
-                            # else:
-                            #     sim_loss = torch.Tensor([0.0]).cuda()
+                        if lam_adj > 0.0 and (adj_indices_to_alter is not None):
+                            adj_loss = self._compute_cosine_adj(attention_maps, indices_to_alter, adj_indices_to_alter)    
+                        else:
+                            adj_loss = torch.Tensor([0.0]).cuda()
                             
-                            loss = cosine_loss*lam_cos + iou_loss*lam_iou + kl_loss*lam_kl + adj_loss*lam_adj
+                        # if lam_sim > 0.0:
+                        #     sim_loss = self._compute_cosine(attention_maps, indices_to_alter)    
+                        # else:
+                        #     sim_loss = torch.Tensor([0.0]).cuda()
+                        
+                        loss = cosine_loss*lam_cos + iou_loss*lam_iou + kl_loss*lam_kl + adj_loss*lam_adj
 
-                            print_string = f"Step {i}, Attend {j} | Loss:{loss.item():0.6f};" + \
-                                            f"cosine: {cosine_loss.item():0.6f}; " + \
-                                                f"iou: {iou_loss.item():0.6f}; " + \
-                                                    f"kl: {kl_loss.item():0.6f};" + \
-                                                        f"adj: {adj_loss.item():0.6f};" 
-                                                        # f"inter sim: {sim_loss.item():0.6f}" 
+                        print_string = f"Step {i}, Attend {j} | Loss:{loss.item():0.6f};" + \
+                                        f"cosine: {cosine_loss.item():0.6f}; " + \
+                                            f"iou: {iou_loss.item():0.6f}; " + \
+                                                f"kl: {kl_loss.item():0.6f};" + \
+                                                    f"adj: {adj_loss.item():0.6f};" 
+                                                    # f"inter sim: {sim_loss.item():0.6f}" 
 
-                            if j%print_freq ==0:
+                        if j%print_freq ==0:
+                            print(print_string)
+                            
+                        if (cosine_loss < cos_target_loss and iou_loss < iou_target_loss and adj_loss < adj_target_loss ):
+                            if j%print_freq !=0:
                                 print(print_string)
-                                
-                            if (cosine_loss < cos_target_loss and iou_loss < iou_target_loss and adj_loss < adj_target_loss ):
-                                if j%print_freq !=0:
-                                    print(print_string)
 
-                            # # NOTE:Let's make sure we don't update any embedding weights besides the newly added token
-                            loss.backward(retain_graph=False)
-                            if not (cosine_loss < cos_target_loss and iou_loss < iou_target_loss and adj_loss < adj_target_loss ):
-                                cond_optim.step()
+                        # # NOTE:Let's make sure we don't update any embedding weights besides the newly added token
+                        loss.backward(retain_graph=False)
+                        if not (cosine_loss < cos_target_loss and iou_loss < iou_target_loss and adj_loss < adj_target_loss ):
+                            cond_optim.step()
 
-                            cond_optim.zero_grad()
+                        cond_optim.zero_grad()
 
-                            if not (cosine_loss < cos_target_loss and iou_loss < iou_target_loss and adj_loss < adj_target_loss):
-                                if attn_inner_steps >1:
-                                    with torch.no_grad():
-                                        self.text_encoder.get_input_embeddings().weight[index_no_updates] = orig_embeds_params[index_no_updates]
-                            
-                            if (cosine_loss < cos_target_loss and iou_loss < iou_target_loss and adj_loss < adj_target_loss ):
-                                break
+                        if not (cosine_loss < cos_target_loss and iou_loss < iou_target_loss and adj_loss < adj_target_loss):
+                            if attn_inner_steps >1:
+                                with torch.no_grad():
+                                    self.text_encoder.get_input_embeddings().weight[index_no_updates] = orig_embeds_params[index_no_updates]
+                        
+                        if (cosine_loss < cos_target_loss and iou_loss < iou_target_loss and adj_loss < adj_target_loss ):
+                            break
                 
                 ### ============== 1st part END: ATTENTION ==============
                 torch.cuda.empty_cache()
