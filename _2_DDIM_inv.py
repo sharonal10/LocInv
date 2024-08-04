@@ -77,7 +77,7 @@ if __name__=="__main__":
         #         _results_folder = os.path.join(args.results_folder, f"{img_id}")
         #     else:
         #         _results_folder = os.path.join(args.results_folder, f"{args.search_text}_{img_id}")
-
+        img_id = img_path.split('/')[-1].split('.')[0]
         _results_folder = args.results_folder
 
         print(_results_folder)
