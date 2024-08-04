@@ -67,16 +67,18 @@ if __name__=="__main__":
 
     for img_path in dirs[:]:
         print(img_path)
-        if os.path.isdir(args.input_image):
-            search_text = img_path.split('/')[-2]
-            img_id = img_path.split('/')[-1].split('.')[0]
-            _results_folder = os.path.join(args.results_folder, f"{search_text}_{img_id}")
-        elif os.path.isfile(args.input_image):
-            img_id = img_path.split('/')[-1].split('.')[0]
-            if args.search_text is None:
-                _results_folder = os.path.join(args.results_folder, f"{img_id}")
-            else:
-                _results_folder = os.path.join(args.results_folder, f"{args.search_text}_{img_id}")
+        # if os.path.isdir(args.input_image):
+        #     search_text = img_path.split('/')[-2]
+        #     img_id = img_path.split('/')[-1].split('.')[0]
+        #     _results_folder = os.path.join(args.results_folder, f"{search_text}_{img_id}")
+        # elif os.path.isfile(args.input_image):
+        #     img_id = img_path.split('/')[-1].split('.')[0]
+        #     if args.search_text is None:
+        #         _results_folder = os.path.join(args.results_folder, f"{img_id}")
+        #     else:
+        #         _results_folder = os.path.join(args.results_folder, f"{args.search_text}_{img_id}")
+
+        _results_folder = args.results_folder
 
         print(_results_folder)
         os.makedirs(os.path.join(_results_folder, "org_img"), exist_ok=True)

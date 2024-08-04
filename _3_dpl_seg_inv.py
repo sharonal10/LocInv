@@ -239,10 +239,10 @@ if __name__=="__main__":
     else:
         adj_indices_to_alter=None
 
-    target_image = Image.open(args.target_image).convert("RGB").resize((512, 512))
-    target_image = np.array(target_image) / 255.0
-    print(np.max(target_image), np.min(target_image), target_image.shape)
-    target_image = torch.from_numpy(target_image).float()
+    # target_image = Image.open(args.target_image).convert("RGB").resize((512, 512))
+    # target_image = np.array(target_image) / 255.0
+    # print(np.max(target_image), np.min(target_image), target_image.shape)
+    # target_image = torch.from_numpy(target_image).float()
         
     rec_pil_train, attention_maps, uncond_embeddings_list, cond_embeddings_list = pipeline(
         caption,
@@ -277,7 +277,7 @@ if __name__=="__main__":
         softmax_op = args.softmax_op,
         seg_maps=seg_maps,
         loss_type=args.loss_type,
-        target_image=target_image,
+        # target_image=target_image,
         seg_maps_full=seg_maps_full
     )
 
