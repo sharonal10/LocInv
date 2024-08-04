@@ -304,7 +304,7 @@ if __name__=="__main__":
         )
 
     rec_pil[0].save(os.path.join(args.results_folder, 
-            f"null_inv_recon/{postfix}/{bname}.png"))
+            f"null_inv_recon/{postfix}_{bname}.png"))
     
     with open(os.path.join(args.results_folder, 
             f"attn/{postfix}/{bname}.pkl"), 

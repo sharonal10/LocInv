@@ -17,4 +17,18 @@ python _3_dpl_seg_inv.py --input_image images/rendered_chair.jpg --results_folde
 
 python _2_DDIM_inv.py --input_image images/rendered_chair.jpg --results_folder ./output --num_ddim_steps 100 && python _3_dpl_seg_inv.py --input_image images/rendered_chair.jpg --results_folder output/rendered_chair --max_iter_to_alter 0 --initializer_token chair --placeholder_token  '<chair>'  --lam_cos 2.0 --lam_iou 2.0 --lam_kl 2.0 --lam_adj 0.0 --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --target_image images/chair_green.jpg --num_ddim_steps 100 --exp_name one_word_green_latents --attn_inner_steps 50 --null_inner_steps 100
 
-python _2_DDIM_inv.py --input_image images/chair_green.jpg --results_folder ./output/rev_rendered_chair && python _3_dpl_seg_inv.py --input_image images/chair_green.jpg --results_folder output/rev_rendered_chair --initializer_token chair --placeholder_token  '<chair>' --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --exp_name reverted_green_chair 
+python _2_DDIM_inv.py --input_image images/chair1.jpg --results_folder ./output/rev_brown_chair && python _3_dpl_seg_inv.py --input_image images/chair1.jpg --results_folder output/rev_brown_chair --initializer_token chair --placeholder_token  '<chair>' --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --exp_name rev_brown_chair 
+
+ --lam_cos 0.0 --lam_iou 0.0 --lam_kl 0.0 --lam_adj 0.0
+
+ python _2_DDIM_inv.py --input_image images/chair1.jpg --results_folder ./output/rev_catdog_brown_chair && python _3_dpl_seg_inv.py --input_image images/chair1.jpg --results_folder output/rev_catdog_brown_chair --initializer_token cat dog --placeholder_token  '<cat-toy>' '<dog-toy>' --smooth_op --softmax_op --seg_dirs seg_dirs/catdog --exp_name rev_catdog_brown_chair 
+
+  python _2_DDIM_inv.py --input_image images/chair1.jpg --results_folder ./output/rev_catdog_brown_chair_no_threshold && python _3_dpl_seg_inv.py --input_image images/chair1.jpg --results_folder output/rev_catdog_brown_chair_no_threshold --initializer_token cat dog --placeholder_token  '<cat-toy>' '<dog-toy>' --smooth_op --softmax_op --seg_dirs seg_dirs/catdog --exp_name rev_catdog_brown_chair_no_threshold --beta_cos 0.0 --beta_iou 0.0 --beta_kl 0.0 --beta_sim 0.0 --beta_adj 0.0
+  
+  python _2_DDIM_inv.py --input_image images/chair1.jpg --results_folder ./output/rev_brown_chair_yes_threshold && python _3_dpl_seg_inv.py --input_image images/chair1.jpg --results_folder output/rev_brown_chair_yes_threshold --initializer_token chair --placeholder_token  '<chair>' --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --exp_name rev_brown_chair_yes_threshold --beta_cos 0.2 --beta_iou 0.2 --beta_kl 0.2 --beta_sim 0.2 --beta_adj 0.0
+
+
+
+  python _3_dpl_seg_inv.py --input_image images/chair1.jpg --results_folder output/rev_brown_chair_yes_threshold --initializer_token chair --placeholder_token  '<chair>' --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --exp_name rev_brown_chair_yes_threshold --beta_cos 0.3 --beta_iou 0.3 && python _3_dpl_seg_inv.py --input_image images/chair1.jpg --results_folder output/rev_brown_chair_yes_threshold --initializer_token chair --placeholder_token  '<chair>' --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --exp_name rev_brown_chair_yes_threshold --beta_cos 0.4 --beta_iou 0.4
+
+    python _2_DDIM_inv.py --input_image images/chair1.jpg --results_folder ./output/rev_brown_chair_yes_threshold_segmented && python _3_dpl_seg_inv.py --input_image images/chair1.jpg --results_folder output/rev_brown_chair_yes_threshold_segmented --initializer_token one two three four five six --placeholder_token  '<one>' '<two>' '<three>' '<four>' '<five>' '<six>' --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --exp_name rev_brown_chair_yes_threshold_segmented --beta_cos 0.2 --beta_iou 0.2 --beta_kl 0.2 --beta_sim 0.2 --beta_adj 0.0
