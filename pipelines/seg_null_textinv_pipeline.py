@@ -1192,9 +1192,20 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
         placeholder_token_id=49408,
         max_iter_to_alter=25,
         index_no_updates=None,
-        cond_embeddings_list=None,
-        uncond_embeddings_list=None,
+        # cond_embeddings_list=None,
+        # uncond_embeddings_list=None,
     ):
+        
+        prompt_embeds = self._encode_prompt(
+                        prompt,
+                        device,
+                        num_images_per_prompt,
+                        do_classifier_free_guidance,
+                        negative_prompt,
+                        prompt_embeds=None, ### NOTE: reinitialize
+                        negative_prompt_embeds=negative_prompt_embeds,
+                    )
+        uncond_embeddings, cond_embeddings = prompt_embeds.chunk(2)
         indices_to_alter = token_indices
         # 0. Define the spatial resolutions.
         height = height or self.unet.config.sample_size * self.vae_scale_factor
@@ -1272,13 +1283,13 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
 
                 ### NOTE: replace the cond and unconditional embeddings here
-                token_embeds = self.text_encoder.get_input_embeddings().weight.data
-                for ind in range(len(placeholder_token_id)):
-                    token_embeds[placeholder_token_id[ind]] = cond_embeddings_list[i][ind]
+                # token_embeds = self.text_encoder.get_input_embeddings().weight.data
+                # for ind in range(len(placeholder_token_id)):
+                #     token_embeds[placeholder_token_id[ind]] = cond_embeddings_list[i][ind]
                 # self.text_encoder.get_input_embeddings().weight[index_no_updates] = orig_embeds_params[index_no_updates]
                 encoder_hidden_states = self.text_encoder(text_input_ids.to(device))[0].to(dtype=torch.float32)
                 
-                prompt_embeds = torch.cat([uncond_embeddings_list[i].cuda(), encoder_hidden_states.cuda()])
+                prompt_embeds = torch.cat([uncond_embeddings.cuda(), encoder_hidden_states.cuda()])
                 
                 noise_pred = self.unet( 
                                     latent_model_input,

@@ -151,10 +151,16 @@ if __name__=="__main__":
 
     token_embeds = text_encoder.get_input_embeddings().weight.data
     mean_embedding = token_embeds.mean(dim=0)
+
+    with open(f'{args.input_embs_path}_uncond.pkl', 'rb') as f:
+        input_uncond_embeddings = pkl.load(f)[-1][0][5]
+
+    with open(f'{args.input_embs_path}_cond.pkl', 'rb') as f:
+        input_cond_embeddings = pkl.load(f)[-1][0][5]
     
     for ind in range(len(placeholder_token_id)):
         # import pdb; pdb.set_trace()
-        token_embeds[placeholder_token_id[ind]] = mean_embedding # token_embeds[initializer_token_id[ind]]
+        token_embeds[placeholder_token_id[ind]] = input_uncond_embeddings # token_embeds[initializer_token_id[ind]]
         index_no_updates[placeholder_token_id[ind]]=False
         
     # NOTE: Freeze all parameters except for the token embeddings in text encoder
@@ -246,60 +252,56 @@ if __name__=="__main__":
     # print(np.max(target_image), np.min(target_image), target_image.shape)
     # target_image = torch.from_numpy(target_image).float()
 
-    with open(f'{args.input_embs_path}_uncond.pkl', 'rb') as f:
-        input_uncond_embeddings_list = pkl.load(f)
 
-    with open(f'{args.input_embs_path}_cond.pkl', 'rb') as f:
-        input_cond_embeddings_list = pkl.load(f)
         
-    rec_pil_train, attention_maps, uncond_embeddings_list, cond_embeddings_list = pipeline(
-        caption,
-        num_inference_steps=args.num_ddim_steps,
-        latents=inv_latents[-1],
-        guidance_scale=args.negative_guidance_scale,
-        all_latents = inv_latents,
-        print_freq=args.print_freq,
-        null_inner_steps=args.null_inner_steps,
-        attn_inner_steps=args.attn_inner_steps,
-        placeholder_token_id=placeholder_token_id,
-        index_no_updates=index_no_updates,
-        token_indices = args.indices_to_alter,
-        adj_indices_to_alter=adj_indices_to_alter,
-        alpha_cos = args.alpha_cos,
-        alpha_iou = args.alpha_iou,
-        alpha_kl = args.alpha_kl,
-        alpha_sim = args.alpha_sim,
-        alpha_adj = args.alpha_adj,
-        beta_cos = args.beta_cos,
-        beta_iou = args.beta_iou,
-        beta_kl = args.beta_kl,
-        beta_sim = args.beta_sim,
-        beta_adj = args.beta_adj,
-        lam_cos = args.lam_cos,
-        lam_iou = args.lam_iou,
-        lam_kl = args.lam_kl,
-        lam_sim = args.lam_sim,
-        lam_adj = args.lam_adj,
-        attn_res=args.attn_res,
-        smooth_op=args.smooth_op,
-        softmax_op = args.softmax_op,
-        seg_maps=seg_maps,
-        loss_type=args.loss_type,
-        # target_image=target_image,
-        seg_maps_full=seg_maps_full,
-        input_uncond_embeddings=input_uncond_embeddings_list[-1].cuda(),
-        input_cond_embeddings=input_cond_embeddings_list[-1].cuda(),
-    )
+    # rec_pil_train, attention_maps, uncond_embeddings_list, cond_embeddings_list = pipeline(
+    #     caption,
+    #     num_inference_steps=args.num_ddim_steps,
+    #     latents=inv_latents[-1],
+    #     guidance_scale=args.negative_guidance_scale,
+    #     all_latents = inv_latents,
+    #     print_freq=args.print_freq,
+    #     null_inner_steps=args.null_inner_steps,
+    #     attn_inner_steps=args.attn_inner_steps,
+    #     placeholder_token_id=placeholder_token_id,
+    #     index_no_updates=index_no_updates,
+    #     token_indices = args.indices_to_alter,
+    #     adj_indices_to_alter=adj_indices_to_alter,
+    #     alpha_cos = args.alpha_cos,
+    #     alpha_iou = args.alpha_iou,
+    #     alpha_kl = args.alpha_kl,
+    #     alpha_sim = args.alpha_sim,
+    #     alpha_adj = args.alpha_adj,
+    #     beta_cos = args.beta_cos,
+    #     beta_iou = args.beta_iou,
+    #     beta_kl = args.beta_kl,
+    #     beta_sim = args.beta_sim,
+    #     beta_adj = args.beta_adj,
+    #     lam_cos = args.lam_cos,
+    #     lam_iou = args.lam_iou,
+    #     lam_kl = args.lam_kl,
+    #     lam_sim = args.lam_sim,
+    #     lam_adj = args.lam_adj,
+    #     attn_res=args.attn_res,
+    #     smooth_op=args.smooth_op,
+    #     softmax_op = args.softmax_op,
+    #     seg_maps=seg_maps,
+    #     loss_type=args.loss_type,
+    #     # target_image=target_image,
+    #     seg_maps_full=seg_maps_full,
+    #     input_uncond_embeddings=input_uncond_embeddings_list[-1].cuda(),
+    #     input_cond_embeddings=input_cond_embeddings_list[-1].cuda(),
+    # )
 
-    with open(os.path.join(args.results_folder, 
-            f"embed_list/{postfix}/{bname}_uncond.pkl"), 
-            'wb') as f:
-        pkl.dump(uncond_embeddings_list, f)
+    # with open(os.path.join(args.results_folder, 
+    #         f"embed_list/{postfix}/{bname}_uncond.pkl"), 
+    #         'wb') as f:
+    #     pkl.dump(uncond_embeddings_list, f)
 
-    with open(os.path.join(args.results_folder, 
-            f"embed_list/{postfix}/{bname}_cond.pkl"), 
-            'wb') as f:
-        pkl.dump(cond_embeddings_list, f)
+    # with open(os.path.join(args.results_folder, 
+    #         f"embed_list/{postfix}/{bname}_cond.pkl"), 
+    #         'wb') as f:
+    #     pkl.dump(cond_embeddings_list, f)
 
     rec_pil = pipeline.reconstruct(
             caption,
@@ -309,40 +311,40 @@ if __name__=="__main__":
             placeholder_token_id=placeholder_token_id,
             index_no_updates=index_no_updates,
             token_indices = args.indices_to_alter,
-            cond_embeddings_list=cond_embeddings_list,
-            uncond_embeddings_list=uncond_embeddings_list,
+            # cond_embeddings_list=cond_embeddings_list,
+            # uncond_embeddings_list=uncond_embeddings_list,
         )
 
     rec_pil[0].save(os.path.join(args.results_folder, 
             f"null_inv_recon/{postfix}_{bname}.png"))
     
-    with open(os.path.join(args.results_folder, 
-            f"attn/{postfix}/{bname}.pkl"), 
-            'wb') as f:
-        pkl.dump(attention_maps, f)
+    # with open(os.path.join(args.results_folder, 
+    #         f"attn/{postfix}/{bname}.pkl"), 
+    #         'wb') as f:
+    #     pkl.dump(attention_maps, f)
 
-    ### NOTE: save the averaged attention map in figures
-    prompts_ = ["<|startoftext|>",] + caption_list + ["<|endoftext|>",]
+    # ### NOTE: save the averaged attention map in figures
+    # prompts_ = ["<|startoftext|>",] + caption_list + ["<|endoftext|>",]
 
-    attn_maps = [item.unsqueeze(0) for item in attention_maps]
-    attn_maps = torch.cat(attn_maps).mean(dim=0)
-    print(attn_maps.shape)
+    # attn_maps = [item.unsqueeze(0) for item in attention_maps]
+    # attn_maps = torch.cat(attn_maps).mean(dim=0)
+    # print(attn_maps.shape)
 
-    single_attn_paths = save_attn_avg(save_path=os.path.join(args.results_folder, f"attn/{postfix}"), 
-                img_path=args.input_image, 
-                caption_list=prompts_, 
-                aggr_attn=attn_maps, 
-                placeholders_list=args.placeholder_token, 
-                show_orig_img=True, 
-                image_size=512,)
+    # single_attn_paths = save_attn_avg(save_path=os.path.join(args.results_folder, f"attn/{postfix}"), 
+    #             img_path=args.input_image, 
+    #             caption_list=prompts_, 
+    #             aggr_attn=attn_maps, 
+    #             placeholders_list=args.placeholder_token, 
+    #             show_orig_img=True, 
+    #             image_size=512,)
     
-    ### NOTE: compute and save iou
-    IoU_txt_file = os.path.join(args.results_folder, f"attn/{postfix}", 'iou.txt')
-    IoUs=[]
-    for object_id in range(len(seg_maps_paths)):
-        IoU = mean_iou(seg_maps_paths[object_id], single_attn_paths[object_id], Threshold=0.3)
-        print(IoU)
-        IoUs.append(str(IoU))
+    # ### NOTE: compute and save iou
+    # IoU_txt_file = os.path.join(args.results_folder, f"attn/{postfix}", 'iou.txt')
+    # IoUs=[]
+    # for object_id in range(len(seg_maps_paths)):
+    #     IoU = mean_iou(seg_maps_paths[object_id], single_attn_paths[object_id], Threshold=0.3)
+    #     print(IoU)
+    #     IoUs.append(str(IoU))
 
-    with open(IoU_txt_file, "w") as f:
-            f.write(','.join(IoUs))
+    # with open(IoU_txt_file, "w") as f:
+    #         f.write(','.join(IoUs))
