@@ -153,10 +153,10 @@ if __name__=="__main__":
     mean_embedding = token_embeds.mean(dim=0)
 
     with open(f'{args.input_embs_path}_uncond.pkl', 'rb') as f:
-        input_uncond_embeddings = pkl.load(f)[-1][0][5]
+        input_uncond_embeddings = pkl.load(f)[-1].cuda()[0][5]
 
     with open(f'{args.input_embs_path}_cond.pkl', 'rb') as f:
-        input_cond_embeddings = pkl.load(f)[-1][0][5]
+        input_cond_embeddings = pkl.load(f)[-1].cuda()[0][5]
     
     for ind in range(len(placeholder_token_id)):
         # import pdb; pdb.set_trace()
