@@ -153,6 +153,7 @@ if __name__=="__main__":
     mean_embedding = token_embeds.mean(dim=0)
     
     for ind in range(len(placeholder_token_id)):
+        import pdb; pdb.set_trace()
         token_embeds[placeholder_token_id[ind]] = mean_embedding # token_embeds[initializer_token_id[ind]]
         index_no_updates[placeholder_token_id[ind]]=False
         
