@@ -286,8 +286,8 @@ if __name__=="__main__":
         loss_type=args.loss_type,
         # target_image=target_image,
         seg_maps_full=seg_maps_full,
-        input_uncond_embeddings=input_uncond_embeddings_list[-1],
-        input_cond_embeddings=input_cond_embeddings_list[-1],
+        input_uncond_embeddings=input_uncond_embeddings_list[-1].cuda(),
+        input_cond_embeddings=input_cond_embeddings_list[-1].cuda(),
     )
 
     with open(os.path.join(args.results_folder, 
