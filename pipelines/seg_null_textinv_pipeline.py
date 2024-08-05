@@ -1196,6 +1196,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
         # uncond_embeddings_list=None,
     ):
         
+        do_classifier_free_guidance = guidance_scale > 1.0
         device = self._execution_device
         prompt_embeds = self._encode_prompt(
                         prompt,
