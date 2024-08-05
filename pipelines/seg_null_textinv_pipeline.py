@@ -941,11 +941,12 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                 uncond_embeddings = uncond_embeddings.detach().clone().requires_grad_(True)
                 cond_embeddings = cond_embeddings.detach().clone().requires_grad_(False)
                 opt = torch.optim.Adam([uncond_embeddings], lr=1e-2 * (1. - i / 100.))
-                loss = F.mse_loss(uncond_embeddings, input_uncond_embeddings).mean()
+                with torch.enable_grad():
+                    loss = F.mse_loss(uncond_embeddings, input_uncond_embeddings).mean()
 
-                loss.backward(retain_graph=False)
-                opt.step()
-                opt.zero_grad()
+                    loss.backward(retain_graph=False)
+                    opt.step()
+                    opt.zero_grad()
                 
                 # with torch.enable_grad():
                 #     for j in range(null_inner_steps):
