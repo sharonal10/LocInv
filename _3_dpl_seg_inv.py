@@ -96,6 +96,7 @@ def arguments():
     parser.add_argument('--initializer_token', nargs='+', type=str, default=None)
 
     parser.add_argument('--exp_name', default='exp')
+    parser.add_argument('--input_embs_path')
     args = parser.parse_args()
     return args
 
@@ -243,6 +244,12 @@ if __name__=="__main__":
     # target_image = np.array(target_image) / 255.0
     # print(np.max(target_image), np.min(target_image), target_image.shape)
     # target_image = torch.from_numpy(target_image).float()
+
+    with open(f'{args.input_embs_path}_uncond.pkl', 'rb') as f:
+        input_uncond_embeddings_list = pkl.load(f)
+
+    with open(f'{args.input_embs_path}_cond.pkl', 'rb') as f:
+        input_cond_embeddings_list = pkl.load(f)
         
     rec_pil_train, attention_maps, uncond_embeddings_list, cond_embeddings_list = pipeline(
         caption,
@@ -278,7 +285,9 @@ if __name__=="__main__":
         seg_maps=seg_maps,
         loss_type=args.loss_type,
         # target_image=target_image,
-        seg_maps_full=seg_maps_full
+        seg_maps_full=seg_maps_full,
+        input_uncond_embeddings=input_uncond_embeddings_list[-1],
+        input_cond_embeddings=input_cond_embeddings_list[-1],
     )
 
     with open(os.path.join(args.results_folder, 
