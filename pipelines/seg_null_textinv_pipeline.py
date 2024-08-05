@@ -1196,6 +1196,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
         # uncond_embeddings_list=None,
     ):
         
+        device = self._execution_device
         prompt_embeds = self._encode_prompt(
                         prompt,
                         device,
