@@ -19,20 +19,10 @@ def read_segfile(seg_image_path):
         seg_img_data=seg_img_data[:,:,-1]
     seg_img_data = torch.from_numpy(seg_img_data).to(torch.float32).cuda().unsqueeze(0)
     return seg_img_data
-
-def read_segfile_full(seg_image_path):
-    seg_image = Image.open(seg_image_path).resize((512,512))
-    seg_img_data = np.asarray(seg_image).astype(bool)
-    if len(seg_img_data.shape) >2:
-        seg_img_data=seg_img_data[:,:,-1]
-    seg_img_data = torch.from_numpy(seg_img_data).to(torch.float32).cuda().unsqueeze(0)
-    return seg_img_data
-    
     
 def arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--input_image', type=str, default=None)
-    parser.add_argument('--target_image', type=str, default=None)
     parser.add_argument('--results_folder', type=str, default=None)
     parser.add_argument('--seg_dirs', type=str, default=None)
     
@@ -94,7 +84,6 @@ def arguments():
     ### NOTE: textual inversion parameters
     parser.add_argument('--placeholder_token', nargs='+', type=str, default=None)
     parser.add_argument('--initializer_token', nargs='+', type=str, default=None)
-
     parser.add_argument('--exp_name', default='exp')
     args = parser.parse_args()
     return args
@@ -217,7 +206,6 @@ if __name__=="__main__":
     ######## ================================================
     ### NOTE: read segmentation maps
     seg_maps=[]
-    seg_maps_full=[]
     seg_maps_paths=[]
     for ind in range(len(seg_search_words)):
         object_name = seg_search_words[ind]
@@ -231,18 +219,12 @@ if __name__=="__main__":
 
         print(f'read segmentation map from {seg_image_path}')
         seg_maps.append(read_segfile(seg_image_path))
-        seg_maps_full.append(read_segfile_full(seg_image_path))
     ######## ================================================
 
     if args.adj_bind:
         adj_indices_to_alter = [x-1 for x in args.indices_to_alter]
     else:
         adj_indices_to_alter=None
-
-    target_image = Image.open(args.target_image).convert("RGB").resize((512, 512))
-    target_image = np.array(target_image) / 255.0
-    print(np.max(target_image), np.min(target_image), target_image.shape)
-    target_image = torch.from_numpy(target_image).float()
         
     rec_pil_train, attention_maps, uncond_embeddings_list, cond_embeddings_list = pipeline(
         caption,
@@ -277,8 +259,6 @@ if __name__=="__main__":
         softmax_op = args.softmax_op,
         seg_maps=seg_maps,
         loss_type=args.loss_type,
-        target_image=target_image,
-        seg_maps_full=seg_maps_full
     )
 
     with open(os.path.join(args.results_folder, 
