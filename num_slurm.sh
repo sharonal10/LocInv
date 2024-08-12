@@ -48,11 +48,19 @@ GPU_INFO="--partition viscam --account viscam --gpu_type a6000 --cpus_per_task 8
 
 # python _3_dpl_seg_inv.py --input_image images/chair1.jpg --results_folder output/rev_brown_chair_yes_threshold --initializer_token chair --placeholder_token  '<chair>' --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --exp_name insert_using_uncond --input_embs_path output/rev_brown_chair_yes_threshold/embed_list/rev_brown_chair_yes_threshold-cos_al_50.0_beta_0.7_lam_1.0_iou_al_25.0_beta_0.7_lam_1.0_kl_al_25.0_beta_1.0_lam_1.0_adj_al_50.0_beta_0.1_lam_2.0_softmax_True_smooth_True_null_31_attn_31_CFG_7.5_adj_False/chair1
 
-python -m tu.sbatch.sbatch_sweep --time 96:00:00 \
---proj_dir /viscam/projects/image2Blender/differentiable_engine/LocInv --conda_env dpl \
---job "08-11-phase2-whole-brown_chair-on_4pics_3000-LR5e-04" --command "python _2_DDIM_inv.py --input_image images/chair1.jpg --prompt_str 'a photo of a <chair-toy> in the style of target' --results_folder ./output/phase2-whole-brown_chair-on_4pics_3000-LR5e-04 && python _3_dpl_seg_inv.py --input_image images/chair1.jpg --results_folder output/phase2-whole-brown_chair-on_4pics_3000-LR5e-04 --initializer_token target --placeholder_token  '<chair-real>' --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --exp_name phase2-whole-brown_chair-on_4pics_3000-LR5e-04" $GPU_INFO
+# python -m tu.sbatch.sbatch_sweep --time 96:00:00 \
+# --proj_dir /viscam/projects/image2Blender/differentiable_engine/LocInv --conda_env dpl \
+# --job "08-11-phase2-whole-brown_chair-on_4pics_3000-LR5e-04" --command "python _2_DDIM_inv.py --input_image images/chair1.jpg --prompt_str 'a photo of a <chair-toy> in the style of target' --results_folder ./output/phase2-whole-brown_chair-on_4pics_3000-LR5e-04 && python _3_dpl_seg_inv.py --input_image images/chair1.jpg --results_folder output/phase2-whole-brown_chair-on_4pics_3000-LR5e-04 --initializer_token target --placeholder_token  '<chair-real>' --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --exp_name phase2-whole-brown_chair-on_4pics_3000-LR5e-04" $GPU_INFO
 
 
-python -m tu.sbatch.sbatch_sweep --time 96:00:00 \
---proj_dir /viscam/projects/image2Blender/differentiable_engine/LocInv --conda_env dpl \
---job "08-11-phase2-whole-brown_chair-on_4pics_3000-LR5e-04-no_thresh" --command "python _2_DDIM_inv.py --input_image images/chair1.jpg --prompt_str 'a photo of a <chair-toy> in the style of target' --results_folder ./output/phase2-whole-brown_chair-on_4pics_3000-LR5e-04-no_thresh && python _3_dpl_seg_inv.py --input_image images/chair1.jpg --results_folder output/phase2-whole-brown_chair-on_4pics_3000-LR5e-04-no_thresh --initializer_token target --placeholder_token  '<chair-real>' --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --exp_name phase2-whole-brown_chair-on_4pics_3000-LR5e-04-no_thresh  --beta_cos 0.0 --beta_iou 0.0 --beta_kl 0.0 --beta_sim 0.0 --beta_adj 0.0" $GPU_INFO
+# python -m tu.sbatch.sbatch_sweep --time 96:00:00 \
+# --proj_dir /viscam/projects/image2Blender/differentiable_engine/LocInv --conda_env dpl \
+# --job "08-11-phase2-whole-brown_chair-on_4pics_3000-LR5e-04-no_thresh" --command "python _2_DDIM_inv.py --input_image images/chair1.jpg --prompt_str 'a photo of a <chair-toy> in the style of target' --results_folder ./output/phase2-whole-brown_chair-on_4pics_3000-LR5e-04-no_thresh && python _3_dpl_seg_inv.py --input_image images/chair1.jpg --results_folder output/phase2-whole-brown_chair-on_4pics_3000-LR5e-04-no_thresh --initializer_token target --placeholder_token  '<chair-real>' --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --exp_name phase2-whole-brown_chair-on_4pics_3000-LR5e-04-no_thresh  --beta_cos 0.0 --beta_iou 0.0 --beta_kl 0.0 --beta_sim 0.0 --beta_adj 0.0" $GPU_INFO
+
+vals=(0.0 0.3 0.6 0.9 1.2)
+for val in "${vals[@]}"; do
+  python -m tu.sbatch.sbatch_sweep --time 96:00:00 \
+  --proj_dir /viscam/projects/image2Blender/differentiable_engine/LocInv --conda_env dpl \
+  --job "08-11-black_chair-${val}" --command "python _2_DDIM_inv.py --input_image images/chair_black.jpg --prompt_str 'a photo of a chair' --results_folder ./output/black_chair-${val} && python _3_dpl_seg_inv.py --input_image images/chair_black.jpg --results_folder output/black_chair-${val} --initializer_token chair --placeholder_token  '<chair-real>' --smooth_op --softmax_op --seg_dirs seg_dirs/black_chair --exp_name black_chair-${val}  --beta_cos ${val} --beta_iou ${val} --beta_kl ${val} --beta_sim ${val} --beta_adj 0.0" $GPU_INFO
+
+done
