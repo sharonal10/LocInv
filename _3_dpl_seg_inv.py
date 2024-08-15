@@ -96,6 +96,8 @@ def arguments():
     parser.add_argument('--initializer_token', nargs='+', type=str, default=None)
 
     parser.add_argument('--exp_name', default='exp')
+    parser.add_argument('--early_stop', type=int, default=None)
+    
     args = parser.parse_args()
     return args
 
@@ -278,7 +280,8 @@ if __name__=="__main__":
         seg_maps=seg_maps,
         loss_type=args.loss_type,
         # target_image=target_image,
-        seg_maps_full=seg_maps_full
+        seg_maps_full=seg_maps_full,
+        early_stop=args.early_stop,
     )
 
     with open(os.path.join(args.results_folder, 

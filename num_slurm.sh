@@ -90,9 +90,12 @@ GPU_INFO="--partition viscam --account viscam --gpu_type a6000 --cpus_per_task 8
 
 
 # ordinary threshold
-vals=(0 10 20 30 40 50)
+vals=(10 20 30 40 50)
 for val in "${vals[@]}"; do
   python -m tu.sbatch.sbatch_sweep --time 96:00:00 \
   --proj_dir /viscam/projects/image2Blender/differentiable_engine/LocInv --conda_env dpl \
-  --job "08-15-${val}" --command "python _2_DDIM_inv.py --input_image images/chair1.jpg --results_folder ./output/08-15-${val} --num_ddim_steps ${val} --prompt_str 'a photo of a chair' && python _3_dpl_seg_inv.py --input_image images/chair1.jpg --results_folder output/08-15-${val} --initializer_token chair --placeholder_token  '<chair>' --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --exp_name 08-15-${val} --num_ddim_steps ${val}" $GPU_INFO
+  --job "08-15-${val}" --command "cp -r output/08-15-early-stop output/08-15-early-stop-${val}  && python _3_dpl_seg_inv.py --input_image images/chair1.jpg --results_folder output/08-15-early-stop-${val} --initializer_token chair --placeholder_token  '<chair>' --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --exp_name 08-15-early-stop-${val} --early_stop ${val}" $GPU_INFO
 done
+
+
+python _3_dpl_seg_inv.py --input_image images/chair1.jpg --results_folder output/08-15-early-stop-1 --initializer_token chair --placeholder_token  '<chair>' --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --exp_name 08-15-early-stop-1 --early_stop 1

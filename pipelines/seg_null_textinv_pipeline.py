@@ -715,7 +715,8 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
         lam_adj=0.0,
         adj_indices_to_alter=None,
         target_image=None,
-        seg_maps_full=[]
+        seg_maps_full=[],
+        early_stop=None
     ):
         ### NOTE: lower the cuda usage
         # self.vae.to('cpu')
@@ -801,6 +802,8 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
 
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
+                if i >= early_stop:
+                    break
                 # expand the latents if we are doing classifier free guidance
                 latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
