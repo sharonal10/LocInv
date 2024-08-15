@@ -94,5 +94,5 @@ vals=(0 10 20 30 40 50)
 for val in "${vals[@]}"; do
   python -m tu.sbatch.sbatch_sweep --time 96:00:00 \
   --proj_dir /viscam/projects/image2Blender/differentiable_engine/LocInv --conda_env dpl \
-  --job "08-15-${val}" --command "python _2_DDIM_inv.py --input_image images/chair1.jpg --results_folder ./output/08-15-${val} --num_ddim_steps ${val} && python _3_dpl_seg_inv.py --input_image images/chair1.jpg --results_folder output/08-15-${val} --initializer_token chair --placeholder_token  '<chair>' --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --exp_name 08-15-${val} --num_ddim_steps ${val}" $GPU_INFO
+  --job "08-15-${val}" --command "python _2_DDIM_inv.py --input_image images/chair1.jpg --results_folder ./output/08-15-${val} --num_ddim_steps ${val} --prompt_str 'a photo of a chair' && python _3_dpl_seg_inv.py --input_image images/chair1.jpg --results_folder output/08-15-${val} --initializer_token chair --placeholder_token  '<chair>' --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --exp_name 08-15-${val} --num_ddim_steps ${val}" $GPU_INFO
 done

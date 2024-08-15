@@ -96,6 +96,9 @@ if __name__=="__main__":
 
         if args.prompt_file is None and (not args.manual_prompt):
             prompt_file=os.path.join(_results_folder, f"prompt.txt")
+            if args.prompt_str is not None:
+                with open(prompt_file, "w") as file:
+                    file.write(args.prompt_str)
             caption = open(prompt_file).read().strip()
             print(f'taking caption from file {prompt_file}: \"{caption}\"')
             
