@@ -802,8 +802,6 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
 
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
-                if i >= early_stop:
-                    break
                 # expand the latents if we are doing classifier free guidance
                 latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
@@ -840,7 +838,7 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                                                                                     indices=token_indices,
                                                                                     smooth_op=smooth_op,
                                                                                     softmax_op=softmax_op)
-                        if (lam_cos+lam_iou) == 0.0:
+                        if (lam_cos+lam_iou) == 0.0 or i >= early_stop:
                             # print('no need to backpropagate')
                             self.unet.zero_grad()
                             torch.cuda.empty_cache()
@@ -954,6 +952,12 @@ class StableDiffusion_SegPipeline(DiffusionPipeline):
                                             encoder_hidden_states=context,
                                             cross_attention_kwargs=cross_attention_kwargs,
                                             ).sample
+                        
+                        if i >= early_stop:
+                            # print('no need to backpropagate')
+                            self.unet.zero_grad()
+                            torch.cuda.empty_cache()
+                            break
                         ### NOTE: consider modify the above for loss scaler
                         noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
                         noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
