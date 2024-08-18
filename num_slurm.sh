@@ -66,7 +66,7 @@ for val in "${vals[@]}"; do
   
   python -m tu.sbatch.sbatch_sweep --time 96:00:00 \
   --proj_dir /viscam/projects/image2Blender/differentiable_engine/LocInv --conda_env dpl \
-  --job "08-16-black_chair_rendered-${val}" --command "python _2_DDIM_inv.py --input_image images/black_chair_rendered.jpg --prompt_str 'a photo of a chair' --results_folder ./output/08-16-black_chair_rendered-${val} && python _3_dpl_seg_inv.py --input_image images/black_chair_rendered.png --results_folder output/08-16-black_chair_rendered-${val} --initializer_token chair --placeholder_token  '<chair-real>' --smooth_op --softmax_op --seg_dirs seg_dirs/black_chair --exp_name 08-16-black_chair_rendered-${val}  --beta_cos ${val} --beta_iou ${val}" $GPU_INFO "$EXTRA_GPU_INFO"
+  --job "08-16-black_chair_rendered-${val}" --command "python _2_DDIM_inv.py --input_image images/black_chair_rendered.png --prompt_str 'a photo of a chair' --results_folder ./output/08-16-black_chair_rendered-${val} && python _3_dpl_seg_inv.py --input_image images/black_chair_rendered.png --results_folder output/08-16-black_chair_rendered-${val} --initializer_token chair --placeholder_token  '<chair-real>' --smooth_op --softmax_op --seg_dirs seg_dirs/black_chair --exp_name 08-16-black_chair_rendered-${val}  --beta_cos ${val} --beta_iou ${val}" $GPU_INFO "$EXTRA_GPU_INFO"
 done
 
 
