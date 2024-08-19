@@ -145,7 +145,7 @@ if __name__=="__main__":
 
     initializer_token_id = token_ids
     placeholder_token_id = tokenizer.convert_tokens_to_ids(args.placeholder_token)    
-    pretrained_token_id = tokenizer.convert_tokens_to_ids(args.pretrained_token)    
+    pretrained_token_id = tokenizer.convert_tokens_to_ids([args.pretrained_token])    
 
     # Resize the token embeddings as we are adding new special tokens to the tokenizer
     text_encoder.resize_token_embeddings(len(tokenizer))
