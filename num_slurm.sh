@@ -63,10 +63,29 @@ for val in "${vals[@]}"; do
   # python -m tu.sbatch.sbatch_sweep --time 96:00:00 \
   # --proj_dir /viscam/projects/image2Blender/differentiable_engine/LocInv --conda_env dpl \
   # --job "08-16-black_chair-${val}" --command "python _2_DDIM_inv.py --input_image images/chair_black.jpg --prompt_str 'a photo of a chair' --results_folder ./output/08-16-black_chair-${val} && python _3_dpl_seg_inv.py --input_image images/chair_black.jpg --results_folder output/08-16-black_chair-${val} --initializer_token chair --placeholder_token  '<chair-real>' --smooth_op --softmax_op --seg_dirs seg_dirs/black_chair --exp_name 08-16-black_chair-${val}  --beta_cos ${val} --beta_iou ${val}" $GPU_INFO "$EXTRA_GPU_INFO"
-  
+
   python -m tu.sbatch.sbatch_sweep --time 96:00:00 \
   --proj_dir /viscam/projects/image2Blender/differentiable_engine/LocInv --conda_env dpl \
-  --job "08-16-black_chair_rendered-${val}" --command "python _2_DDIM_inv.py --input_image images/black_chair_rendered.png --prompt_str 'a photo of a chair' --results_folder ./output/08-16-black_chair_rendered-${val} && python _3_dpl_seg_inv.py --input_image images/black_chair_rendered.png --results_folder output/08-16-black_chair_rendered-${val} --initializer_token chair --placeholder_token  '<chair-real>' --smooth_op --softmax_op --seg_dirs seg_dirs/black_chair --exp_name 08-16-black_chair_rendered-${val}  --beta_cos ${val} --beta_iou ${val}" $GPU_INFO "$EXTRA_GPU_INFO"
+  --job "08-18-brown_chair_rendered-${val}" --command "python _2_DDIM_inv.py --input_image images/rendered_chair.jpg --prompt_str 'a photo of a chair' --results_folder ./output/08-18-brown_chair_rendered-${val} && python _3_dpl_seg_inv.py --input_image images/rendered_chair.jpg --results_folder output/08-18-brown_chair_rendered-${val} --initializer_token chair --placeholder_token  '<chair-real>' --smooth_op --softmax_op --seg_dirs seg_dirs/rendered_chair --exp_name 08-18-brown_chair_rendered-${val}  --beta_cos ${val} --beta_iou ${val}" $GPU_INFO "$EXTRA_GPU_INFO"
+  
+  # python -m tu.sbatch.sbatch_sweep --time 96:00:00 \
+  # --proj_dir /viscam/projects/image2Blender/differentiable_engine/LocInv --conda_env dpl \
+  # --job "08-16-black_chair_rendered-${val}" --command "python _2_DDIM_inv.py --input_image images/black_chair_rendered.png --prompt_str 'a photo of a chair' --results_folder ./output/08-16-black_chair_rendered-${val} && python _3_dpl_seg_inv.py --input_image images/black_chair_rendered.png --results_folder output/08-16-black_chair_rendered-${val} --initializer_token chair --placeholder_token  '<chair-real>' --smooth_op --softmax_op --seg_dirs seg_dirs/black_chair --exp_name 08-16-black_chair_rendered-${val}  --beta_cos ${val} --beta_iou ${val}" $GPU_INFO "$EXTRA_GPU_INFO"
+
+  # --------
+
+  python -m tu.sbatch.sbatch_sweep --time 96:00:00 \
+  --proj_dir /viscam/projects/image2Blender/differentiable_engine/LocInv --conda_env dpl \
+  --job "08-18-p2-checker_on_black_chair_rendered-${val}" --command "python _2_DDIM_inv.py --input_image images/black_chair_checker.png --prompt_str 'a photo of a <pre> in the style of chair' --results_folder ./output/08-18-checker_on_black_chair_rendered-${val} && python _3_dpl_seg_inv_phase2.py --input_image images/black_chair_checker.png --results_folder output/08-18-checker_on_black_chair_rendered-${val} --initializer_token chair --placeholder_token  '<chair-real>' --smooth_op --softmax_op --seg_dirs seg_dirs/black_chair --exp_name 08-18-checker_on_black_chair_rendered-${val}  --beta_cos ${val} --beta_iou ${val} --pretrained_token '<pre>' --pretrained_token_path 'output/08-16-black_chair_rendered-0.6/embed_list/08-16-black_chair_rendered-0.6-cos_al_50.0_beta_0.6_lam_1.0_iou_al_25.0_beta_0.6_lam_1.0_kl_al_25.0_beta_1.0_lam_1.0_adj_al_50.0_beta_0.1_lam_2.0_softmax_True_smooth_True_null_31_attn_31_CFG_7.5_adj_False/black_chair_rendered_cond.pkl'" $GPU_INFO "$EXTRA_GPU_INFO"
+
+  # NOTE! path is not set, still in progress
+  # python -m tu.sbatch.sbatch_sweep --time 96:00:00 \
+  # --proj_dir /viscam/projects/image2Blender/differentiable_engine/LocInv --conda_env dpl \
+  # --job "08-18-p2-checker_on_brown_chair_rendered-${val}" --command "python _2_DDIM_inv.py --input_image images/black_chair_checker.png --prompt_str 'a photo of a <pre> in the style of chair' --results_folder ./output/08-18-checker_on_brown_chair_rendered-${val} && python _3_dpl_seg_inv_phase2.py --input_image images/black_chair_checker.png --results_folder output/08-18-checker_on_brown_chair_rendered-${val} --initializer_token chair --placeholder_token  '<chair-real>' --smooth_op --softmax_op --seg_dirs seg_dirs/black_chair --exp_name 08-18-checker_on_brown_chair_rendered-${val}  --beta_cos ${val} --beta_iou ${val} --pretrained_token '<pre>' --pretrained_token_path ''" $GPU_INFO "$EXTRA_GPU_INFO"
+
+  # python -m tu.sbatch.sbatch_sweep --time 96:00:00 \
+  # --proj_dir /viscam/projects/image2Blender/differentiable_engine/LocInv --conda_env dpl \
+  # --job "08-18-p2-brown_on_brown_chair_rendered-${val}" --command "python _2_DDIM_inv.py --input_image images/black_chair_checker.png --prompt_str 'a photo of a <pre> in the style of chair' --results_folder ./output/08-18-brown_on_brown_chair_rendered-${val} && python _3_dpl_seg_inv_phase2.py --input_image images/black_chair_checker.png --results_folder output/08-18-brown_on_brown_chair_rendered-${val} --initializer_token chair --placeholder_token  '<chair-real>' --smooth_op --softmax_op --seg_dirs seg_dirs/black_chair --exp_name 08-18-brown_on_brown_chair_rendered-${val}  --beta_cos ${val} --beta_iou ${val} --pretrained_token '<pre>' --pretrained_token_path ''" $GPU_INFO "$EXTRA_GPU_INFO"
 done
 
 

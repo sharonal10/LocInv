@@ -8,6 +8,7 @@ import argparse
 import os
 import pickle as pkl
 import numpy as np
+import copy
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -95,6 +96,10 @@ def arguments():
     parser.add_argument('--placeholder_token', nargs='+', type=str, default=None)
     parser.add_argument('--initializer_token', nargs='+', type=str, default=None)
 
+    parser.add_argument('--pretrained_token', type=str, default=None)
+    parser.add_argument('--pretrained_token_path', type=str, default=None)
+
+
     parser.add_argument('--exp_name', default='exp')
     args = parser.parse_args()
     return args
@@ -134,11 +139,13 @@ if __name__=="__main__":
     ### NOTE: for textual inversion https://huggingface.co/docs/diffusers/training/text_inversion
     tokenizer = pipeline.tokenizer
     text_encoder = pipeline.text_encoder
-    num_added_tokens = tokenizer.add_tokens(args.placeholder_token)
+    _ = tokenizer.add_tokens(args.placeholder_token)
+    _ = tokenizer.add_tokens([args.pretrained_token])
     token_ids = tokenizer.encode(args.initializer_token, add_special_tokens=False)
 
     initializer_token_id = token_ids
     placeholder_token_id = tokenizer.convert_tokens_to_ids(args.placeholder_token)    
+    pretrained_token_id = tokenizer.convert_tokens_to_ids(args.pretrained_token)    
 
     # Resize the token embeddings as we are adding new special tokens to the tokenizer
     text_encoder.resize_token_embeddings(len(tokenizer))
@@ -154,6 +161,10 @@ if __name__=="__main__":
     for ind in range(len(placeholder_token_id)):
         token_embeds[placeholder_token_id[ind]] = mean_embedding # token_embeds[initializer_token_id[ind]]
         index_no_updates[placeholder_token_id[ind]]=False
+
+    assert len(pretrained_token_id) == 1, len(pretrained_token_id)
+    pretrained_emb = pkl.load(args.pretrained_token_path)[-1][0]
+    token_embeds[pretrained_token_id[0]] = pretrained_emb
         
     # NOTE: Freeze all parameters except for the token embeddings in text encoder
     text_encoder.text_model.encoder.requires_grad_(False)
@@ -234,10 +245,13 @@ if __name__=="__main__":
         seg_maps_full.append(read_segfile_full(seg_image_path))
     ######## ================================================
 
-    if args.adj_bind:
-        adj_indices_to_alter = [x-1 for x in args.indices_to_alter]
-    else:
-        adj_indices_to_alter=None
+    # if args.adj_bind:
+    #     adj_indices_to_alter = [x-1 for x in args.indices_to_alter]
+    # else:
+    #     adj_indices_to_alter=None
+
+    adj_indices_to_alter = [caption_list.index(args.pretrained_token) + 1]
+    print(f'adj_indices_to_alter: {adj_indices_to_alter}')
 
     # target_image = Image.open(args.target_image).convert("RGB").resize((512, 512))
     # target_image = np.array(target_image) / 255.0
@@ -305,6 +319,36 @@ if __name__=="__main__":
 
     rec_pil[0].save(os.path.join(args.results_folder, 
             f"null_inv_recon/{postfix}_{bname}.png"))
+    
+    rec_pil2 = pipeline.reconstruct(
+            f"a photo of a {args.placeholder_token[0]}",
+            num_inference_steps=args.num_ddim_steps,
+            latents=inv_latents[-1],
+            guidance_scale=args.negative_guidance_scale,
+            placeholder_token_id=placeholder_token_id,
+            index_no_updates=index_no_updates,
+            token_indices = args.indices_to_alter,
+            cond_embeddings_list=cond_embeddings_list,
+            uncond_embeddings_list=uncond_embeddings_list,
+        )
+    
+    rec_pil2[0].save(os.path.join(args.results_folder, 
+            f"null_inv_recon/{postfix}_{bname}_alone.png"))
+    
+    rec_pil3 = pipeline.reconstruct(
+            f"a photo of a {args.pretrained_token}",
+            num_inference_steps=args.num_ddim_steps,
+            latents=inv_latents[-1],
+            guidance_scale=args.negative_guidance_scale,
+            placeholder_token_id=placeholder_token_id,
+            index_no_updates=index_no_updates,
+            token_indices = args.indices_to_alter,
+            cond_embeddings_list=cond_embeddings_list,
+            uncond_embeddings_list=uncond_embeddings_list,
+        )
+    
+    rec_pil3[0].save(os.path.join(args.results_folder, 
+            f"null_inv_recon/{postfix}_{bname}_verify.png"))
     
     with open(os.path.join(args.results_folder, 
             f"attn/{postfix}/{bname}.pkl"), 
