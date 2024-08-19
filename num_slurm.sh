@@ -1,12 +1,13 @@
 #!/bin/bash
 
-GPU_INFO="--partition viscam --account viscam --gpu_type 3090 --cpus_per_task 8 --num_gpus 1 --mem 100G"
-# GPU_INFO="--partition viscam --account viscam --gpu_type a6000 --cpus_per_task 8 --num_gpus 1 --mem 24G"
+# GPU_INFO="--partition viscam --account viscam --gpu_type 3090 --cpus_per_task 8 --num_gpus 1 --mem 100G"
+GPU_INFO="--partition viscam --account viscam --gpu_type a6000 --cpus_per_task 8 --num_gpus 1 --mem 24G"
 # GPU_INFO="--partition viscam --account viscam --gpu_type titanrtx --cpus_per_task 8 --num_gpus 1 --mem 64G"
 
 # GPU_INFO="--partition svl --account viscam --gpu_type titanrtx --cpus_per_task 8 --num_gpus 1 --mem 64G"
 
-EXTRA_GPU_INFO="exclude=viscam1,viscam5,viscam7,svl[1-6],svl[8-10]"
+# EXTRA_GPU_INFO="exclude=viscam1,viscam5,viscam7,svl[1-6],svl[8-10]"
+EXTRA_GPU_INFO=""
 
 
 # python -m tu.sbatch.sbatch_sweep --time 96:00:00 \
