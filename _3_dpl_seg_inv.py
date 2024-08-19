@@ -150,6 +150,7 @@ if __name__=="__main__":
 
     token_embeds = text_encoder.get_input_embeddings().weight.data
     mean_embedding = token_embeds.mean(dim=0)
+    import pdb; pdb.set_trace()
     
     for ind in range(len(placeholder_token_id)):
         token_embeds[placeholder_token_id[ind]] = mean_embedding # token_embeds[initializer_token_id[ind]]
