@@ -163,7 +163,8 @@ if __name__=="__main__":
         index_no_updates[placeholder_token_id[ind]]=False
 
     assert len(pretrained_token_id) == 1, len(pretrained_token_id)
-    pretrained_emb = pkl.load(args.pretrained_token_path)[-1][0]
+    emb_file = open(args.pretrained_token_path, 'rb')
+    pretrained_emb = pkl.load(emb_file)[-1][0]
     token_embeds[pretrained_token_id[0]] = pretrained_emb
         
     # NOTE: Freeze all parameters except for the token embeddings in text encoder
