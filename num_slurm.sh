@@ -110,6 +110,14 @@ for val in "${vals[@]}"; do
   # python -m tu.sbatch.sbatch_sweep --time 96:00:00 \
   # --proj_dir /viscam/projects/image2Blender/differentiable_engine/LocInv --conda_env dpl \
   # --job "08-18-p2-brown_on_brown_chair_rendered-${val}" --command "python _2_DDIM_inv.py --input_image images/black_chair_checker.png --prompt_str 'a photo of a <pre> in the style of chair' --results_folder ./output/08-18-brown_on_brown_chair_rendered-${val} && python _3_dpl_seg_inv_phase2.py --input_image images/black_chair_checker.png --results_folder output/08-18-brown_on_brown_chair_rendered-${val} --initializer_token chair --placeholder_token  '<chair-real>' --smooth_op --softmax_op --seg_dirs seg_dirs/black_chair --exp_name 08-18-brown_on_brown_chair_rendered-${val}  --beta_cos ${val} --beta_iou ${val} --pretrained_token '<pre>' --pretrained_token_path ''" $GPU_INFO "$EXTRA_GPU_INFO"
+
+  # ---
+
+  # python -m tu.sbatch.sbatch_sweep --time 96:00:00 \
+  # --proj_dir /viscam/projects/image2Blender/differentiable_engine/LocInv --conda_env dpl \
+  # --job "08-18-p3-brown_on_brown_chair_rendered-${val}" --command "python _2_DDIM_inv.py --input_image images/black_chair_checker.png --prompt_str 'a photo of a <pre> in the style of chair' --results_folder ./output/08-18-brown_on_brown_chair_rendered-${val} && python _3_dpl_seg_inv_phase2.py --input_image images/black_chair_checker.png --results_folder output/08-18-brown_on_brown_chair_rendered-${val} --initializer_token chair --placeholder_token  '<chair-real>' --smooth_op --softmax_op --seg_dirs seg_dirs/black_chair --exp_name 08-18-brown_on_brown_chair_rendered-${val}  --beta_cos ${val} --beta_iou ${val} --pretrained_token '<pre>' --pretrained_token_path ''" $GPU_INFO "$EXTRA_GPU_INFO"
+
+
 done
 
 

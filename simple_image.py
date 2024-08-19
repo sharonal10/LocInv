@@ -1,5 +1,6 @@
 import torch
-from diffusers import DDIMScheduler
+# from diffusers import DDIMScheduler
+from diffusers import StableDiffusionPipeline
 from PIL import Image
 from pipelines.seg_null_textinv_pipeline import StableDiffusion_SegPipeline
 from _utils.ptp_utils import show_cross_attention, show_cross_attention_plus_orig_img,show_cross_attention_blackwhite, save_attn_avg, mean_iou
@@ -26,7 +27,7 @@ if __name__=="__main__":
     torch_dtype = torch.float32
     sd_model_ckpt = args.model_path
 
-    pipeline = StableDiffusion_SegPipeline.from_pretrained(
+    pipeline = StableDiffusionPipeline.from_pretrained(
         sd_model_ckpt,
         torch_dtype=torch_dtype,
     )
